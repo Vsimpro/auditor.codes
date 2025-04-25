@@ -39,6 +39,7 @@ By using this platform, you're participating in its evolution and helping shape 
     * Tailwind CSS (for specific pages like landing/auth)
     * Vanilla JavaScript (DOM manipulation, API calls)
     * Prism.js (Syntax Highlighting)
+ 
 *Deployment configuration information can be found in `conf/readme.md`*
 
 ## Database Schema
