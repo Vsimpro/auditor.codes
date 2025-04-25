@@ -1,5 +1,6 @@
 # Code Auditor CTF
 ![image](https://github.com/user-attachments/assets/fdfbbffc-71f9-4463-856d-aca054399a0f)
+
 A web-based Capture The Flag (CTF) platform offering unparalleled depth and breadth in source code auditing challenges. With the largest collection of real-world C/C++ vulnerability examples available anywhere, users analyze authentic code snippets, identify sophisticated security flaws, and master secure coding practices through hands-on experience.
 Our comprehensive training environment features thousands of meticulously curated challenges spanning the entire vulnerability spectrum - from classic buffer overflows to the most obscure memory corruption bugs. No other platform provides this level of completeness in source code security education.
 
