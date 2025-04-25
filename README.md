@@ -5,8 +5,6 @@ A web-based Capture The Flag (CTF) platform offering unparalleled depth and brea
 
 Our comprehensive training environment features thousands of meticulously curated challenges spanning the entire vulnerability spectrum - from classic buffer overflows to the most obscure memory corruption bugs. No other platform provides this level of completeness in source code security education.
 
-*Deployment configuration information can be found in `conf/readme.md`*
-
 ### This application is currently in ALPHA stage and was entirely "vibe coded" with the assistance of Large Language Models.
 
 What does this mean? The development process prioritized creative flow and rapid iteration over traditional software engineering practices.
@@ -41,6 +39,7 @@ By using this platform, you're participating in its evolution and helping shape 
     * Tailwind CSS (for specific pages like landing/auth)
     * Vanilla JavaScript (DOM manipulation, API calls)
     * Prism.js (Syntax Highlighting)
+*Deployment configuration information can be found in `conf/readme.md`*
 
 ## Database Schema
 
