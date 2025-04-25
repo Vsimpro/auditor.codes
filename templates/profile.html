@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }}'s Profile - Code Auditor CTF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Tailwind handles background/text color via classes */
+        }
+        /* Gradient text effect (Keep this) */
+        .gradient-text {
+            background: linear-gradient(to right, #8b5cf6, #3b82f6); /* violet-500 to blue-500 */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        /* Basic Nav Link Styling (Tailwind handles most via classes) */
+        .nav-link {
+             color: #cbd5e1; /* slate-300 */
+             transition: color 0.2s ease, background-color 0.2s ease;
+             padding: 0.5rem 0.75rem; /* py-2 px-3 */
+             border-radius: 0.375rem; /* rounded-md */
+             font-size: 0.875rem; /* text-sm */
+             font-weight: 500; /* font-medium */
+             display: inline-flex;
+             align-items: center;
+             text-decoration: none; /* Ensure links are not underlined by default */
+        }
+        .nav-link:hover {
+            color: #ffffff; /* white */
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        /* Ensure dropdown items have correct text color */
+        .dropdown-item { color: #cbd5e1; transition: color 0.2s ease, background-color 0.2s ease; text-decoration: none; }
+        .dropdown-item:hover { color: #ffffff; background-color: #334155; }
+        .dropdown-logout-item { color: #f87171; transition: color 0.2s ease, background-color 0.2s ease; }
+        .dropdown-logout-item:hover { color: #fca5a5; background-color: #334155; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 antialiased">
+
+    <nav class="py-4 px-6 md:px-10 sticky top-0 z-50 backdrop-blur-md bg-slate-900/70 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white">
+                <a href="{{ url_for('landing') }}" style="text-decoration: none; color: inherit;">Code Auditor <span class="gradient-text">CTF</span></a>
+            </h1>
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <a href="{{ url_for('learn_page') }}" class="nav-link">Learn</a>
+                <a href="{{ url_for('ctf_app') }}" class="nav-link">Challenges</a>
+                <a href="{{ url_for('sponsors_page') }}" class="nav-link">Sponsors</a>
+                <div class="relative group ml-2">
+                    <button type="button" class="nav-link inline-flex items-center">
+                        <span>My Account</span>
+                        <svg class="ml-1 h-5 w-5 text-slate-400 group-hover:text-slate-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden group-hover:block group-focus-within:block z-50 border border-slate-700">
+                        <div class="py-1" role="none">
+                            {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('profile') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Profile</a>
+                                <a href="{{ url_for('leaderboard') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Scoreboard</a>
+                                <form method="POST" action="{{ url_for('logout') }}" role="none">
+                                     <button type="submit" class="dropdown-logout-item block w-full px-4 py-2 text-left text-sm" role="menuitem" tabindex="-1">Logout</button>
+                                 </form>
+                            {% else %}
+                                <a href="{{ url_for('login') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Login</a>
+                                <a href="{{ url_for('register') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Register</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-2xl mx-auto bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 md:p-8">
+            <div class="text-center mb-8 pb-6 border-b border-slate-700">
+                <h2 class="text-3xl font-bold text-white mb-2">User Profile</h2>
+                <p class="text-lg text-slate-400">{{ user.username }}</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-center">
+                <div class="bg-slate-700 p-5 rounded-lg">
+                    <div class="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2">Total Score</div>
+                    <div class="text-3xl font-semibold text-white">{{ progress.total_score }}</div>
+                </div>
+                <div class="bg-slate-700 p-5 rounded-lg">
+                    <div class="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2">Challenges Completed</div>
+                    <div class="text-3xl font-semibold text-white">{{ progress.completed_count }}</div>
+                </div>
+                </div>
+        </div>
+    </div>
+
+    <footer class="py-8 mt-12 border-t border-slate-800">
+        <div class="container mx-auto px-6 text-center text-slate-500 text-sm">
+             &copy; 2025 Code Auditor CTF. All Rights Reserved.
+        </div>
+    </footer>
+
+</body>
+</html>

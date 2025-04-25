@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Auditor CTF - Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" id="prism-theme-css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+    <style>
+        /* Custom base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Gradient text effect */
+        .gradient-text {
+            background: linear-gradient(to right, #8b5cf6, #3b82f6); /* violet-500 to blue-500 */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        /* Adjust Prism line numbers for dark theme */
+        .line-numbers .line-numbers-rows {
+            background: #334155 !important; /* slate-700 */
+            border-right-color: #475569 !important; /* slate-600 */
+        }
+        .line-numbers-rows > span:before {
+            color: #94a3b8 !important; /* slate-400 */
+        }
+         /* Feedback message styling */
+        #feedback-message.correct {
+             color: #4ade80; /* green-400 */
+             background-color: rgba(74, 222, 128, 0.1);
+             border-color: rgba(74, 222, 128, 0.3);
+         }
+        #feedback-message.incorrect {
+             color: #f87171; /* red-400 */
+             background-color: rgba(248, 113, 113, 0.1);
+             border-color: rgba(248, 113, 113, 0.3);
+         }
+         /* Dark theme select dropdown */
+         select {
+             color: #e2e8f0; /* slate-200 */
+             background-color: #334155; /* slate-700 */
+             border-color: #475569; /* slate-600 */
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+             background-position: right 0.5rem center;
+             background-repeat: no-repeat;
+             background-size: 1.5em 1.5em;
+             padding-right: 2.5rem;
+             -webkit-appearance: none;
+             -moz-appearance: none;
+             appearance: none;
+         }
+         select:focus {
+             outline: none;
+             border-color: #6366f1; /* indigo-500 */
+             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+         }
+         select option {
+             background-color: #1e293b; /* slate-800 */
+             color: #e2e8f0; /* slate-200 */
+         }
+         /* Dark theme assessment form */
+        .assessment-inline-form label {
+             color: #cbd5e1; /* slate-300 */
+         }
+
+         /* Ensure Prism background matches theme */
+         pre[class*="language-"] {
+             background-color: #272822 !important; /* Okaidia theme background */
+             border-radius: 0.5rem;
+             border: 1px solid #475569; /* slate-600 border */
+             margin: 0 !important;
+             box-shadow: none !important;
+         }
+          /* Override default Prism padding if needed with line numbers */
+         pre[class*="language-"].line-numbers {
+             padding-left: 4.8em !important;
+         }
+         /* Ensure code block itself doesn't have conflicting background */
+         code[class*="language-"] {
+             background: none !important;
+         }
+         /* Style for the code comparison container */
+         #code-comparison-container.diff-view-mode {
+             display: flex;
+             gap: 0;
+         }
+          #code-comparison-container.diff-view-mode > div {
+             width: 50%;
+             flex-shrink: 0;
+          }
+          #code-comparison-container.diff-view-mode #vulnerable-code-pane {
+             border-right: 1px solid #475569;
+          }
+          #code-comparison-container.diff-view-mode #vulnerable-code-pane pre {
+              border-top-right-radius: 0;
+              border-bottom-right-radius: 0;
+              border-right: none;
+          }
+           #code-comparison-container.diff-view-mode #fixed-code-pane pre {
+              border-top-left-radius: 0;
+              border-bottom-left-radius: 0;
+          }
+
+    </style>
+</head>
+<body class="antialiased bg-slate-900 text-slate-200 line-numbers">
+
+    <nav class="py-4 px-6 md:px-10 sticky top-0 z-50 backdrop-blur-md bg-slate-900/80 border-b border-slate-700/50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+             <a href="/" class="text-2xl font-bold text-white flex items-center">
+                 <svg class="w-6 h-6 mr-2 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                 </svg>
+                 Code Auditor <span class="gradient-text ml-1">CTF</span>
+             </a>
+             <div id="user-stats" class="flex items-center space-x-4 text-sm font-medium text-slate-300">
+                 <span>Score: <span id="user-score" class="font-semibold text-white">{{ initial_score }}</span></span>
+                 <span class="border-l border-slate-600 pl-4">Completed: <span id="user-completed" class="font-semibold text-white">{{ initial_completed }}</span></span>
+             </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+
+        <div id="loading-message" class="hidden text-center py-8 text-slate-400 italic">Loading challenge...</div>
+        <div id="error-message" class="hidden bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-6" role="alert"></div>
+
+        <section id="challenge-area" class="hidden bg-slate-800 border border-slate-700/50 rounded-xl shadow-lg mb-8 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-slate-700">
+                <div class="challenge-controls flex items-center gap-3"> <label for="difficulty-select" class="text-sm font-medium text-slate-400">Difficulty:</label>
+                    <select id="difficulty-select" class="bg-slate-700 border border-slate-600 text-slate-200 text-sm rounded-md focus:ring-indigo-500 focus:border-indigo-500 block w-auto p-1.5 pr-8">
+                        <option value="easy" selected>Easy</option>
+                    </select>
+                    </div>
+                <h4 id="challenge-id-display" class="text-lg font-semibold text-slate-300 text-right"> Challenge ID: <span class="ml-2 font-mono bg-slate-700 px-2 py-1 rounded-md text-indigo-300"></span>
+                </h4>
+            </div>
+            <div class="code-header flex justify-between items-center mb-3 px-1">
+                <h4 id="code-view-title" class="text-base font-medium text-slate-400">Source Code</h4>
+                <div class="action-buttons">
+                    <button id="diff-btn" data-toggled="false" class="text-xs bg-slate-600 hover:bg-slate-500 text-slate-200 px-3 py-1 rounded-md transition duration-150">
+                        Show Diff View (-{{ PENALTY_DIFF*-1 }} pts)
+                    </button>
+                </div>
+            </div>
+
+            <div id="code-comparison-container" class="code-view-mode rounded-lg overflow-hidden">
+                <div id="vulnerable-code-pane">
+                     <pre id="code-display" class="language-c line-numbers !m-0 !shadow-none border border-slate-700/50 !rounded-lg"><code id="code-block" class="language-c"></code></pre>
+                </div>
+                <div id="fixed-code-pane" class="hidden">
+                     <pre id="fixed-code-display" class="language-c line-numbers !m-0 !shadow-none border border-slate-700/50 !rounded-lg"><code id="fixed-code-block" class="language-c"></code></pre>
+                </div>
+            </div>
+            <input type="hidden" id="challenge-id" value="">
+        </section>
+
+        <section id="assessment-area" class="hidden bg-slate-800 border border-slate-700/50 rounded-xl shadow-lg mb-8 p-6">
+             <h4 class="text-xl font-semibold text-white mb-4 pb-3 border-b border-slate-700">Assessment</h4>
+             <div id="assessment-form">
+                 <div class="assessment-inline-form flex flex-wrap items-center gap-4">
+                     <label for="vulnerability-select" class="block text-sm font-medium text-slate-300 mb-1 md:mb-0">Select Vulnerability Type:</label>
+                     <select id="vulnerability-select" name="cwe_selection" class="flex-grow bg-slate-700 border border-slate-600 text-slate-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
+                         <option value="">-- Please Select --</option>
+                         {% for option in vulnerability_options %}
+                           <option value="{{ option.cwe_id }}">{{ option.cwe_name }}</option>
+                         {% else %}
+                           <option value="" disabled>No options loaded</option>
+                         {% endfor %}
+                     </select>
+                     <button id="submit-btn" class="bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition duration-150">
+                         Submit Assessment
+                     </button>
+                 </div>
+             </div>
+        </section>
+
+        <section id="results-area" class="hidden bg-slate-800/80 border border-slate-700/50 rounded-xl shadow-lg mb-8 p-6">
+             <h4 class="text-xl font-semibold text-white mb-4 pb-3 border-b border-slate-700">Results</h4>
+             <h4 id="feedback-message" class="text-lg font-semibold mb-4 p-3 rounded-md border"></h4>
+             <p id="score-breakdown" class="text-slate-300 mb-2"></p>
+             <p id="correct-answer" class="text-slate-300 mb-4">Correct Vulnerability Type: <span class="ml-1 font-mono bg-slate-700 px-2 py-0.5 rounded text-indigo-300"></span></p>
+             <h5 class="text-base font-semibold text-slate-200 mb-2">Solution Explanation:</h5>
+             <div id="solution-explanation" class="bg-slate-700/50 p-4 rounded-md text-slate-300 text-sm font-mono whitespace-pre-wrap mb-6 border border-slate-600"></div>
+             <button id="next-challenge-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition duration-150">
+                 Load Next Challenge
+             </button>
+        </section>
+
+    </div> <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+
+</body>
+</html>

