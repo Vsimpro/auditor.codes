@@ -5,7 +5,8 @@ A web-based Capture The Flag (CTF) platform offering unparalleled depth and brea
 Our comprehensive training environment features thousands of meticulously curated challenges spanning the entire vulnerability spectrum - from classic buffer overflows to the most obscure memory corruption bugs. No other platform provides this level of completeness in source code security education.
 
 
-**This application is currently in ALPHA stage and was entirely "vibe coded" with the assistance of Large Language Models.**
+### This application is currently in ALPHA stage and was entirely "vibe coded" with the assistance of Large Language Models.
+
 What does this mean? The development process prioritized creative flow and rapid iteration over traditional software engineering practices.
 As an ALPHA release, users should consider themselves active testers of the platform. You will likely encounter bugs, unexpected behaviors, and incomplete features as you explore. These experiences are an integral part of our development process, not exceptions to it.
 By using this platform, you're participating in its evolution and helping shape its future. We encourage you to report any issues, share your insights, and suggest improvements as we transform this LLM-assisted creation into a more stable and refined tool.
