@@ -106,6 +106,49 @@
               border-top-left-radius: 0;
               border-bottom-left-radius: 0;
           }
+          
+          /* ADDED: Fixed height for code displays with scrolling */
+          #vulnerable-code-pane pre, #fixed-code-pane pre {
+              max-height: 500px; /* Shows approximately 25-28 lines */
+              overflow-y: auto;
+          }
+          
+          /* Custom scrollbar styling for code blocks */
+          #vulnerable-code-pane pre::-webkit-scrollbar, 
+          #fixed-code-pane pre::-webkit-scrollbar {
+              width: 8px;
+          }
+          
+          #vulnerable-code-pane pre::-webkit-scrollbar-track, 
+          #fixed-code-pane pre::-webkit-scrollbar-track {
+              background: #1e293b; /* slate-800 */
+          }
+          
+          #vulnerable-code-pane pre::-webkit-scrollbar-thumb, 
+          #fixed-code-pane pre::-webkit-scrollbar-thumb {
+              background-color: #475569; /* slate-600 */
+              border-radius: 4px;
+          }
+          
+          /* Add a subtle indicator that there's more content to scroll */
+          #vulnerable-code-pane pre::after,
+          #fixed-code-pane pre::after {
+              content: '';
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 20px;
+              background: linear-gradient(to top, rgba(39, 40, 34, 0.8), rgba(39, 40, 34, 0));
+              pointer-events: none;
+              opacity: 0;
+              transition: opacity 0.2s;
+          }
+          
+          #vulnerable-code-pane pre.has-overflow::after,
+          #fixed-code-pane pre.has-overflow::after {
+              opacity: 1;
+          }
 
     </style>
 </head>
@@ -152,10 +195,10 @@
 
             <div id="code-comparison-container" class="code-view-mode rounded-lg overflow-hidden">
                 <div id="vulnerable-code-pane">
-                     <pre id="code-display" class="language-c line-numbers !m-0 !shadow-none border border-slate-700/50 !rounded-lg"><code id="code-block" class="language-c"></code></pre>
+                     <pre id="code-display" class="language-c line-numbers !m-0 !shadow-none border border-slate-700/50 !rounded-lg relative"><code id="code-block" class="language-c"></code></pre>
                 </div>
                 <div id="fixed-code-pane" class="hidden">
-                     <pre id="fixed-code-display" class="language-c line-numbers !m-0 !shadow-none border border-slate-700/50 !rounded-lg"><code id="fixed-code-block" class="language-c"></code></pre>
+                     <pre id="fixed-code-display" class="language-c line-numbers !m-0 !shadow-none border border-slate-700/50 !rounded-lg relative"><code id="fixed-code-block" class="language-c"></code></pre>
                 </div>
             </div>
             <input type="hidden" id="challenge-id" value="">
@@ -167,7 +210,7 @@
                  <div class="assessment-inline-form flex flex-wrap items-center gap-4">
                      <label for="vulnerability-select" class="block text-sm font-medium text-slate-300 mb-1 md:mb-0">Select Vulnerability Type:</label>
                      <select id="vulnerability-select" name="cwe_selection" class="flex-grow bg-slate-700 border border-slate-600 text-slate-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
-                         <option value="">-- Please Select --</option>
+                         <option value="">-- Select a vulnerability type --</option>
                          {% for option in vulnerability_options %}
                            <option value="{{ option.cwe_id }}">{{ option.cwe_name }}</option>
                          {% else %}
@@ -199,6 +242,60 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+    
+    <!-- Added JavaScript to detect overflow and add "has-overflow" class -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to check if an element has overflow and needs scrolling
+        function checkForOverflow() {
+            const vulnerableCodePre = document.querySelector('#vulnerable-code-pane pre');
+            const fixedCodePre = document.querySelector('#fixed-code-pane pre');
+            
+            if (vulnerableCodePre) {
+                if (vulnerableCodePre.scrollHeight > vulnerableCodePre.clientHeight) {
+                    vulnerableCodePre.classList.add('has-overflow');
+                } else {
+                    vulnerableCodePre.classList.remove('has-overflow');
+                }
+            }
+            
+            if (fixedCodePre) {
+                if (fixedCodePre.scrollHeight > fixedCodePre.clientHeight) {
+                    fixedCodePre.classList.add('has-overflow');
+                } else {
+                    fixedCodePre.classList.remove('has-overflow');
+                }
+            }
+        }
+        
+        // Check for overflow when code is loaded
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                    setTimeout(checkForOverflow, 100); // Small delay to ensure content is rendered
+                }
+            });
+        });
+        
+        // Start observing code containers
+        const codeBlock = document.getElementById('code-block');
+        const fixedCodeBlock = document.getElementById('fixed-code-block');
+        
+        if (codeBlock) {
+            observer.observe(codeBlock, { childList: true, characterData: true, subtree: true });
+        }
+        
+        if (fixedCodeBlock) {
+            observer.observe(fixedCodeBlock, { childList: true, characterData: true, subtree: true });
+        }
+        
+        // Also check when window is resized
+        window.addEventListener('resize', checkForOverflow);
+        
+        // Check on initial load after a small delay
+        setTimeout(checkForOverflow, 300);
+    });
+    </script>
 
 </body>
 </html>
