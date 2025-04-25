@@ -70,30 +70,34 @@ Follow these steps to set up the project locally for development or testing:
 4.  **Initialize the Database:**
     * Run the database initialization script to create the necessary SQLite tables (`users`, `user_progress`, `challenges`).
     * **(IMPORTANT):** This script assumes your `challenges` table definition is included or already exists. You need a separate process or script to populate the `challenges` table with actual CTF data (code snippets, solutions, CWEs, etc.). The application will not function without challenges in the database. The challenge data can be derived from sources like the [MegaVul dataset](https://github.com/Icyrockton/MegaVul).
-    ```bash
-    python init_db.py
-    ```
+
+ ```bash
+ python init_db.py
+ ```
 
 5.  **Configure Environment Variables (Optional but Recommended):**
     * The application uses a `SECRET_KEY` for session security. While it generates one randomly if not set, it's best practice to set a persistent, strong secret key for development and especially production. You can set this as an environment variable:
-        ```bash
-        # Linux/macOS
-        export SECRET_KEY='your_super_secret_and_random_key_here'
+  
+```bash
+# Linux/macOS
+export SECRET_KEY='your_super_secret_and_random_key_here'
 
-        # Windows (Command Prompt)
-        set SECRET_KEY=your_super_secret_and_random_key_here
+# Windows (Command Prompt)
+set SECRET_KEY=your_super_secret_and_random_key_here
 
-        # Windows (PowerShell)
-        $env:SECRET_KEY='your_super_secret_and_random_key_here'
-        ```
+# Windows (PowerShell)
+$env:SECRET_KEY='your_super_secret_and_random_key_here'
+```
     * Consider using a `.env` file and a library like `python-dotenv` for easier management in development.
 
 6.  **Run the Flask Development Server:**
-    ```bash
-    flask run
-    # OR (if __main__ block is set up as in your app.py)
-    python app.py
-    ```
+
+7.  
+```bash
+flask run
+# OR (if __main__ block is set up as in your app.py)
+python app.py
+```
     The application should now be accessible at `http://127.0.0.1:5000` (or the specified host/port).
 
 ## Database Schema
@@ -124,6 +128,7 @@ The application uses an SQLite database (`auditor_challenges.db`) with the follo
 
 **Note:** Populating the `challenges` table is a prerequisite for using the application. You will need to add your own challenge data or use a script to import it, potentially processing data from the [MegaVul dataset](https://github.com/Icyrockton/MegaVul).
 
+
 ## Usage
 
 1.  Navigate to the application URL (e.g., `http://127.0.0.1:5000`).
@@ -143,10 +148,11 @@ The application uses an SQLite database (`auditor_challenges.db`) with the follo
 For production deployment, do **not** use the built-in Flask development server (`flask run` or `app.run(debug=True)`). Instead, use a production-ready setup:
 
 1.  **WSGI Server:** Use Gunicorn or Waitress to run the Flask application.
-    ```bash
-    # Example using Gunicorn
-    gunicorn --workers 4 --bind 127.0.0.1:5000 app:app
-    ```
+
+```bash
+# Example using Gunicorn
+gunicorn --workers 4 --bind 127.0.0.1:5000 app:app
+```
 2.  **Reverse Proxy:** Place a web server like Nginx or Apache in front of the WSGI server. Nginx/Apache will handle incoming public requests, serve static files directly, manage HTTPS (SSL/TLS termination), and forward dynamic requests to Gunicorn/Waitress.
 3.  **Process Management:** Use `systemd` or `supervisor` to manage the Gunicorn/Waitress process (start on boot, restart on failure).
 4.  **HTTPS:** Obtain and configure an SSL/TLS certificate (Let's Encrypt via `certbot` is recommended) on the reverse proxy (Nginx/Apache).
