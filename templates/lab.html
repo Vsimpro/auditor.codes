@@ -212,7 +212,7 @@
                      <select id="vulnerability-select" name="cwe_selection" class="flex-grow bg-slate-700 border border-slate-600 text-slate-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
                          <option value="">-- Select a vulnerability type --</option>
                          {% for option in vulnerability_options %}
-                           <option value="{{ option.cwe_id }}">{{ option.cwe_name }}</option>
+                           <option value="{{ option.cwe_id }}">{{ option.cwe_id }}: {{ option.cwe_name }}</option>
                          {% else %}
                            <option value="" disabled>No options loaded</option>
                          {% endfor %}
