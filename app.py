@@ -3,6 +3,8 @@ import sqlite3
 import random
 import json # Needed for handling seen_challenges list
 import os
+import base64
+
 # Ensure render_template is imported
 from flask import Flask, render_template, request, jsonify, session, g, redirect, url_for, flash
 from flask_limiter import Limiter
@@ -350,10 +352,8 @@ def submit_answer():
     if not challenge_id or selected_cwe is None: return jsonify({"error": "Missing data"}), 400
 
     try:
-        # Decode the answer
         selected_cwe = base64.b64decode(selected_cwe_b64).decode('utf-8')
     except Exception as e:
-        # Handle cases where the decoding might fail (e.g., invalid base64)
         app.logger.error(f"Base64 decoding failed for '{selected_cwe_b64}': {e}")
     return jsonify({"error": "Invalid answer format"}), 400
 
