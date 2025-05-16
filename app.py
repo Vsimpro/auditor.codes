@@ -5,6 +5,7 @@ import json # Needed for handling seen_challenges list
 import os
 # Ensure render_template is imported
 from flask import Flask, render_template, request, jsonify, session, g, redirect, url_for, flash
+from flask_limiter import Limiter
 # Import Flask-Login components
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 # Import your User model
@@ -31,6 +32,29 @@ login_manager.init_app(app)
 login_manager.login_view = 'login' # Route function name for login page
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info" # Use 'info' or other Bootstrap category
+
+# --- Flask-Limiter Setup ---
+def get_current_user_id():
+    """
+    Key function for Flask-Limiter to identify the user.
+    Returns the string representation of the current user's ID.
+    """
+    if current_user and current_user.is_authenticated:
+        return str(current_user.id)
+    # Fallback: Should not happen for @login_required routes
+    # but good to have a default if limiter is used elsewhere without login.
+    return request.remote_addr
+
+limiter = Limiter(
+    app=app,
+    key_func=get_current_user_id,
+    # To apply limits ONLY to specific routes, OMIT `default_limits`
+    # or set it to an empty list:
+    default_limits=[],  # This ensures no global rate limits are applied by default
+    storage_uri="memory://",
+    # Reminder: "memory://" storage has limitations with multiple Gunicorn workers
+    # for accurate distributed counting. Consider Redis for production.
+)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -312,6 +336,7 @@ def get_diff(challenge_id):
 
 @app.route('/submit_answer', methods=['POST'])
 @login_required # Require login to submit answers
+@limiter.limit("5 per minute")   # THIS SPECIFIC LIMIT APPLIES ONLY TO submit_answer
 def submit_answer():
     """Evaluates the user's answer and updates their progress in the DB."""
     print(f"--- Inside /submit_answer for user {current_user.username} ---")
@@ -319,10 +344,18 @@ def submit_answer():
     if not data: return jsonify({"error": "Invalid request"}), 400
 
     challenge_id = data.get('challenge_id')
-    selected_cwe = data.get('selected_cwe')
+    selected_cwe_b64 = data.get('selected_cwe')
     used_diff = data.get('used_diff', False)
 
     if not challenge_id or selected_cwe is None: return jsonify({"error": "Missing data"}), 400
+
+    try:
+        # Decode the answer
+        selected_cwe = base64.b64decode(selected_cwe_b64).decode('utf-8')
+    except Exception as e:
+        # Handle cases where the decoding might fail (e.g., invalid base64)
+        app.logger.error(f"Base64 decoding failed for '{selected_cwe_b64}': {e}")
+    return jsonify({"error": "Invalid answer format"}), 400
 
     # Get challenge info
     challenge_info = query_db(

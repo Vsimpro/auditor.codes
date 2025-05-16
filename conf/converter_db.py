@@ -22,7 +22,7 @@ print("Applying filters: Must have CVE ID, CWE must be in final list, limiting e
 # --- Configuration ---
 JSON_INPUT_FILE = 'megavul_simple.json'
 DB_FILE = 'auditor_challenges.db'
-MAX_ENTRIES_PER_CWE = 500
+MAX_ENTRIES_PER_CWE = 250
 TARGET_DIFFICULTY = 'easy'
 # --- End Configuration ---
 

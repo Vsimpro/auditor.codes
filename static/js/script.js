@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const submissionData = {
             challenge_id: currentChallengeId,
-            selected_cwe: selectedValue,
+            selected_cwe: btoa(selectedValue),
             used_diff: usedDiff
         };
 

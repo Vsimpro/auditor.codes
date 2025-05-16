@@ -123,3 +123,25 @@ pre[class*="language-"] .token.entity { cursor: help; }
     .challenge-controls { flex-wrap: wrap; }
     .assessment-inline-form select { min-width: 200px; }
 }
+
+.account-dropdown {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px); /* Optional: slight upward movement on hide */
+    transition: opacity 0.2s ease-out, visibility 0s linear 0.2s, transform 0.2s ease-out;
+    /*
+     opacity transitions over 0.2s.
+     visibility changes instantly *after* the 0.2s opacity transition.
+     transform also transitions (for the slide effect).
+    */
+    pointer-events: none; /* Important: prevent clicks when invisible */
+}
+
+.group:hover .account-dropdown,
+.group:focus-within .account-dropdown { /* :focus-within is good for keyboard navigation */
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition-delay: 0s, 0s, 0s; /* Override any delay when showing */
+    pointer-events: auto;
+}

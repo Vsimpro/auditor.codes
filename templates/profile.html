@@ -54,7 +54,7 @@
                 <a href="{{ url_for('learn_page') }}" class="nav-link">Learn</a>
                 <a href="{{ url_for('ctf_app') }}" class="nav-link">Challenges</a>
                 <a href="{{ url_for('sponsors_page') }}" class="nav-link">Sponsors</a>
-                <div class="relative group ml-2">
+                <div class="relative group ml-2 pb-2">
                     <button type="button" class="nav-link inline-flex items-center">
                         <span>My Account</span>
                         <svg class="ml-1 h-5 w-5 text-slate-400 group-hover:text-slate-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
@@ -98,11 +98,18 @@
         </div>
     </div>
 
-    <footer class="py-8 mt-12 border-t border-slate-800">
-        <div class="container mx-auto px-6 text-center text-slate-500 text-sm">
-             &copy; 2025 Code Auditor CTF. All Rights Reserved.
+</body>
+
+    <footer class="py-8 border-t border-slate-800">
+    <div class="container mx-auto px-6 text-center text-slate-500 text-sm">
+        <div>
+            <a href="https://x.com/auditor_codes" target="_blank" rel="noopener noreferrer" class="hover:text-slate-300 mr-4">Twitter</a>
+            <a href="https://discord.gg/rtt3FkerN9" target="_blank" rel="noopener noreferrer" class="hover:text-slate-300">Discord</a>
         </div>
+        <div class="mt-2">
+            &copy; 2025 Code Auditor CTF. All Rights Reserved.
+        </div>
+    </div>
     </footer>
 
-</body>
 </html>
