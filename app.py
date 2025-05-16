@@ -12,7 +12,17 @@ from app_models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 
 DATABASE = 'auditor_challenges.db'
-SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(24))
+
+SECRET_KEY_FROM_ENV = os.environ.get('FLASK_SECRET_KEY')
+
+if not SECRET_KEY_FROM_ENV:
+    print("WARNING: FLASK_SECRET_KEY environment variable not found.")
+    print("         Using a randomly generated key for this session (NOT SUITABLE FOR PRODUCTION).")
+    print("         Ensure FLASK_SECRET_KEY is set in your .service file for consistent sessions.")
+    SECRET_KEY = os.urandom(32).hex() # Generate a temporary hex key if not set
+else:
+    SECRET_KEY = SECRET_KEY_FROM_ENV
+    
 
 SCORE_POINTS = {'easy': 15, 'medium': 20, 'hard': 25, 'insane': 30}
 PENALTY_DIFF = -5
