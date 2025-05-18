@@ -791,12 +791,13 @@ condition: if counter <= sizeof(VARIABLE) then write // Should be <</code></pre>
                                 <ul>
                                     <li>Description: Allocating memory (e.g., <code>malloc</code>, <code>new</code>) but failing to release it (<code>free</code>, <code>delete</code>) when no longer needed. Consumes available memory, potentially slowing or crashing the system. Primarily an availability issue.</li>
                                     <li>Example:
-                                        <pre><code class="language-c">int main(int argc, char **argv) {
+                                        <pre><code class="language-c">
+int main(int argc, char **argv) {
      int count = 0;
-     int LOOPS = 10;
+     int loop = 10;
      int MAXSIZE = 256;
      char *pointer = NULL;
-     for(count=0; count<LOOPS; count++) {
+     for(count = 0; count < loop; count++) {
           // Leak: pointer overwritten each loop without freeing previous allocation
           pointer = (char *)malloc(sizeof(char) * MAXSIZE);
      }
